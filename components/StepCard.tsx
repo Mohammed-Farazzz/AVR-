@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { NavigationStep } from '../utils/types';
 import { COLORS, DIRECTION_NAMES } from '../utils/constants';
 
@@ -23,7 +24,8 @@ export default function StepCard({ step, totalSteps, isActive }: StepCardProps) 
                 </View>
                 {step.completed && (
                     <View style={styles.completedBadge}>
-                        <Text style={styles.completedText}>✓ Completed</Text>
+                        <Ionicons name="checkmark-circle" size={16} color="#fff" style={{ marginRight: 4 }} />
+                        <Text style={styles.completedText}>Completed</Text>
                     </View>
                 )}
             </View>
@@ -47,24 +49,38 @@ export default function StepCard({ step, totalSteps, isActive }: StepCardProps) 
 
             {/* Direction arrow */}
             <View style={styles.arrowContainer}>
-                <Text style={styles.arrow}>{getDirectionArrow(step.direction)}</Text>
+                {getDirectionArrow(step.direction)}
             </View>
         </View>
     );
 }
 
-function getDirectionArrow(direction: string): string {
-    const arrows: Record<string, string> = {
-        north: '⬆️',
-        south: '⬇️',
-        east: '➡️',
-        west: '⬅️',
-        northeast: '↗️',
-        northwest: '↖️',
-        southeast: '↘️',
-        southwest: '↙️',
+function getDirectionArrow(direction: string): JSX.Element {
+    const arrowMap: Record<string, string> = {
+        north: 'arrow-up',
+        south: 'arrow-down',
+        east: 'arrow-forward',
+        west: 'arrow-back',
+        northeast: 'arrow-up-outline',
+        northwest: 'arrow-up-outline',
+        southeast: 'arrow-down-outline',
+        southwest: 'arrow-down-outline',
     };
-    return arrows[direction] || '➡️';
+
+    const iconName = arrowMap[direction] || 'arrow-forward';
+    const rotation = direction === 'northeast' ? 45 :
+        direction === 'northwest' ? -45 :
+            direction === 'southeast' ? 45 :
+                direction === 'southwest' ? -45 : 0;
+
+    return (
+        <Ionicons
+            name={iconName as any}
+            size={48}
+            color={COLORS.primary}
+            style={{ transform: [{ rotate: `${rotation}deg` }] }}
+        />
+    );
 }
 
 const styles = StyleSheet.create({
@@ -111,6 +127,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     completedText: {
         color: '#fff',
@@ -148,8 +166,5 @@ const styles = StyleSheet.create({
     },
     arrowContainer: {
         alignItems: 'center',
-    },
-    arrow: {
-        fontSize: 48,
     },
 });

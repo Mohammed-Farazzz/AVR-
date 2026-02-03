@@ -9,6 +9,7 @@ import {
     TouchableOpacity,
     ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { CampusNode } from '../utils/types';
 import { getCampusMap } from '../services/storageService';
@@ -100,8 +101,14 @@ export default function DestinationsScreen() {
                     style={[styles.filterButton, accessibleOnly && styles.filterButtonActive]}
                     onPress={() => setAccessibleOnly(!accessibleOnly)}
                 >
+                    <Ionicons
+                        name="accessibility"
+                        size={18}
+                        color={accessibleOnly ? '#fff' : COLORS.text}
+                        style={{ marginRight: 6 }}
+                    />
                     <Text style={[styles.filterText, accessibleOnly && styles.filterTextActive]}>
-                        ♿ Accessible Routes Only
+                        Accessible Routes Only
                     </Text>
                 </TouchableOpacity>
             </View>
@@ -189,6 +196,8 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         borderColor: COLORS.border,
         alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'center',
     },
     filterButtonActive: {
         backgroundColor: COLORS.accessible,

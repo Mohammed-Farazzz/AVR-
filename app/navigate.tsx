@@ -9,6 +9,7 @@ import {
     TouchableOpacity,
     Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Route, CampusNode } from '../utils/types';
 import { getCampusMap } from '../services/storageService';
@@ -197,7 +198,7 @@ export default function NavigateScreen() {
             {/* Wrong Direction Warning */}
             {isWrongDirection && (
                 <View style={styles.warningBanner}>
-                    <Text style={styles.warningIcon}>⚠️</Text>
+                    <Ionicons name="alert-circle" size={32} color={COLORS.danger} style={{ marginRight: 12 }} />
                     <View style={styles.warningContent}>
                         <Text style={styles.warningTitle}>Wrong Direction!</Text>
                         <Text style={styles.warningText}>
@@ -225,16 +226,38 @@ export default function NavigateScreen() {
                     style={[styles.controlButton, styles.voiceButton]}
                     onPress={toggleVoice}
                 >
+                    <Ionicons
+                        name={voiceEnabled ? "volume-high" : "volume-mute"}
+                        size={20}
+                        color="#fff"
+                        style={{ marginRight: 6 }}
+                    />
                     <Text style={styles.controlButtonText}>
-                        {voiceEnabled ? '🔊 Voice On' : '🔇 Voice Off'}
+                        {voiceEnabled ? 'Voice On' : 'Voice Off'}
                     </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.controlButton, styles.arButton]}
+                    onPress={() => router.push({
+                        pathname: '/ar-guide',
+                        params: {
+                            routeData,
+                            startLocationId,
+                            destinationId,
+                            currentStepIndex: currentStepIndex.toString(),
+                        },
+                    })}
+                >
+                    <Ionicons name="camera" size={20} color="#fff" style={{ marginRight: 6 }} />
+                    <Text style={styles.controlButtonText}>AR Guide</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={[styles.controlButton, styles.nextButton]}
                     onPress={handleNextStep}
                     disabled={currentStepIndex >= route.steps.length - 1}
                 >
-                    <Text style={styles.controlButtonText}>Next Step →</Text>
+                    <Text style={styles.controlButtonText}>Next Step</Text>
+                    <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 6 }} />
                 </TouchableOpacity>
             </View>
         </View>
@@ -307,16 +330,21 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderTopWidth: 1,
         borderTopColor: COLORS.border,
-        gap: 12,
+        gap: 8,
     },
     controlButton: {
         flex: 1,
         paddingVertical: 14,
         borderRadius: 12,
         alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'row',
     },
     voiceButton: {
         backgroundColor: COLORS.secondary,
+    },
+    arButton: {
+        backgroundColor: COLORS.primary,
     },
     nextButton: {
         backgroundColor: COLORS.primary,
@@ -341,10 +369,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
-    },
-    warningIcon: {
-        fontSize: 32,
-        marginRight: 12,
     },
     warningContent: {
         flex: 1,

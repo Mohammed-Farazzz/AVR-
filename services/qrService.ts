@@ -1,6 +1,6 @@
 // QR Code scanning service
 
-import { BarCodeScanner, PermissionStatus } from 'expo-barcode-scanner';
+import { Camera } from 'expo-camera';
 import { CampusMap, CampusNode } from '../utils/types';
 import { QR_CODE_PREFIX } from '../utils/constants';
 
@@ -9,8 +9,8 @@ import { QR_CODE_PREFIX } from '../utils/constants';
  * @returns Permission status
  */
 export async function requestCameraPermission(): Promise<boolean> {
-    const { status } = await BarCodeScanner.requestPermissionsAsync();
-    return status === PermissionStatus.GRANTED;
+    const { status } = await Camera.requestCameraPermissionsAsync();
+    return status === 'granted';
 }
 
 /**
@@ -44,6 +44,6 @@ export function processQRCode(
  * @returns Permission status
  */
 export async function hasCameraPermission(): Promise<boolean> {
-    const { status } = await BarCodeScanner.getPermissionsAsync();
-    return status === PermissionStatus.GRANTED;
+    const { status } = await Camera.getCameraPermissionsAsync();
+    return status === 'granted';
 }

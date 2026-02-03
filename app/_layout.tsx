@@ -20,6 +20,7 @@ export default function RootLayout() {
             <Stack.Screen name="index" />
             <Stack.Screen name="destinations" />
             <Stack.Screen name="navigate" />
+            <Stack.Screen name="ar-guide" />
         </Stack>
     );
 }

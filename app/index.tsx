@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { BarCodeScanner } from 'expo-barcode-scanner';
+import { Ionicons } from '@expo/vector-icons';
+import { CameraView, BarcodeScanningResult } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { CampusNode } from '../utils/types';
 import { requestCameraPermission, processQRCode } from '../services/qrService';
@@ -22,7 +23,7 @@ export default function HomeScreen() {
         })();
     }, []);
 
-    const handleBarCodeScanned = async ({ data }: { data: string }) => {
+    const handleBarCodeScanned = async ({ data }: BarcodeScanningResult) => {
         setScanned(true);
 
         // Get campus map
@@ -93,8 +94,9 @@ export default function HomeScreen() {
 
             {/* Camera View */}
             <View style={styles.cameraContainer}>
-                <BarCodeScanner
-                    onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+                <CameraView
+                    onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+                    barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
                     style={StyleSheet.absoluteFillObject}
                 />
 
@@ -108,7 +110,7 @@ export default function HomeScreen() {
 
                 {scannedLocation && (
                     <View style={styles.successOverlay}>
-                        <Text style={styles.successIcon}>✓</Text>
+                        <Ionicons name="checkmark-circle" size={64} color="#fff" style={{ marginBottom: 16 }} />
                         <Text style={styles.successText}>Location Found!</Text>
                         <Text style={styles.locationName}>{scannedLocation.name}</Text>
                     </View>
@@ -117,12 +119,18 @@ export default function HomeScreen() {
 
             {/* Instructions */}
             <View style={styles.instructions}>
-                <Text style={styles.instructionText}>
-                    📍 Position the QR code within the frame
-                </Text>
-                <Text style={styles.instructionText}>
-                    🎯 Available locations: Main Gate, Admin Block, Library, Computer Lab
-                </Text>
+                <View style={styles.instructionRow}>
+                    <Ionicons name="location" size={16} color={COLORS.textSecondary} style={{ marginRight: 8 }} />
+                    <Text style={styles.instructionText}>
+                        Position the QR code within the frame
+                    </Text>
+                </View>
+                <View style={styles.instructionRow}>
+                    <Ionicons name="navigate-circle" size={16} color={COLORS.textSecondary} style={{ marginRight: 8 }} />
+                    <Text style={styles.instructionText}>
+                        Available locations: Main Gate, Admin Block, Library, Computer Lab
+                    </Text>
+                </View>
             </View>
 
             {/* Rescan button */}
@@ -213,11 +221,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    successIcon: {
-        fontSize: 64,
-        color: '#fff',
-        marginBottom: 16,
-    },
     successText: {
         fontSize: 24,
         fontWeight: 'bold',
@@ -234,10 +237,15 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
     },
+    instructionRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
     instructionText: {
         fontSize: 14,
         color: COLORS.textSecondary,
-        marginBottom: 8,
+        flex: 1,
     },
     rescanButton: {
         position: 'absolute',
