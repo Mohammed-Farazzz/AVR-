@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../utils/constants';
 
 interface NavigationHeaderProps {
@@ -25,7 +26,7 @@ export default function NavigationHeader({
                     </Text>
                 </View>
                 <View style={styles.arrow}>
-                    <Text style={styles.arrowText}>→</Text>
+                    <Ionicons name="arrow-forward" size={18} color="#fff" />
                 </View>
                 <View style={styles.locationInfo}>
                     <Text style={styles.label}>To</Text>
@@ -35,7 +36,7 @@ export default function NavigationHeader({
                 </View>
             </View>
             <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
-                <Text style={styles.cancelText}>✕</Text>
+                <Ionicons name="close" size={18} color="#fff" />
             </TouchableOpacity>
         </View>
     );
@@ -72,10 +73,6 @@ const styles = StyleSheet.create({
     arrow: {
         marginHorizontal: 8,
     },
-    arrowText: {
-        fontSize: 20,
-        color: '#fff',
-    },
     cancelButton: {
         width: 32,
         height: 32,
@@ -84,10 +81,5 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginLeft: 8,
-    },
-    cancelText: {
-        fontSize: 18,
-        color: '#fff',
-        fontWeight: '600',
     },
 });

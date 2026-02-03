@@ -6,9 +6,11 @@ import {
     Text,
     StyleSheet,
     TouchableOpacity,
-    Alert,
     Animated,
     Dimensions,
+    AppState,
+    AppStateStatus,
+    Easing,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -16,7 +18,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Route, CampusNode } from '../utils/types';
 import { getCampusMap } from '../services/storageService';
 import { getNavigationEngine } from '../services/navigationService';
-import { setVoiceSettings, getVoiceSettings } from '../services/voiceService';
+import { setVoiceSettings, getVoiceSettings, setAppActive, resetVoiceSettings, stopSpeaking } from '../services/voiceService';
 import { COLORS, DIRECTION_DEGREES } from '../utils/constants';
 
 const { width, height } = Dimensions.get('window');
@@ -36,8 +38,10 @@ export default function ARGuideScreen() {
     const [currentStepIndex, setCurrentStepIndex] = useState(parseInt(initialStepIndex || '0'));
     const [voiceEnabled, setVoiceEnabled] = useState(true);
     const [remainingDistance, setRemainingDistance] = useState(0);
+    const [showArrival, setShowArrival] = useState(false);
 
     const arrowRotation = useRef(new Animated.Value(0)).current;
+    const arrowPulse = useRef(new Animated.Value(1)).current;
     const navigationEngine = useRef(getNavigationEngine());
 
     useEffect(() => {
@@ -46,6 +50,36 @@ export default function ARGuideScreen() {
             navigationEngine.current.stopNavigation();
         };
     }, []);
+
+    useEffect(() => {
+        const handleAppStateChange = (state: AppStateStatus) => {
+            setAppActive(state === 'active');
+        };
+
+        const subscription = AppState.addEventListener('change', handleAppStateChange);
+        return () => subscription.remove();
+    }, []);
+
+    useEffect(() => {
+        const pulse = Animated.loop(
+            Animated.sequence([
+                Animated.timing(arrowPulse, {
+                    toValue: 1.04,
+                    duration: 1200,
+                    easing: Easing.out(Easing.quad),
+                    useNativeDriver: true,
+                }),
+                Animated.timing(arrowPulse, {
+                    toValue: 0.98,
+                    duration: 1200,
+                    easing: Easing.inOut(Easing.quad),
+                    useNativeDriver: true,
+                }),
+            ])
+        );
+        pulse.start();
+        return () => pulse.stop();
+    }, [arrowPulse]);
 
     useEffect(() => {
         if (route && currentStepIndex < route.steps.length) {
@@ -84,11 +118,11 @@ export default function ARGuideScreen() {
     const animateArrowToDirection = (direction: string) => {
         const targetDegrees = DIRECTION_DEGREES[direction as keyof typeof DIRECTION_DEGREES] || 0;
 
-        Animated.spring(arrowRotation, {
+        Animated.timing(arrowRotation, {
             toValue: targetDegrees,
+            duration: 420,
+            easing: Easing.out(Easing.cubic),
             useNativeDriver: true,
-            tension: 50,
-            friction: 7,
         }).start();
     };
 
@@ -103,16 +137,8 @@ export default function ARGuideScreen() {
     };
 
     const handleNavigationComplete = () => {
-        Alert.alert(
-            'Navigation Complete',
-            `You have arrived at ${destination?.name}!`,
-            [
-                {
-                    text: 'OK',
-                    onPress: () => router.push('/'),
-                },
-            ]
-        );
+        stopSpeaking();
+        setShowArrival(true);
     };
 
     const handleBackToList = () => {
@@ -122,6 +148,7 @@ export default function ARGuideScreen() {
                 routeData,
                 startLocationId,
                 destinationId,
+                currentStepIndex: currentStepIndex.toString(),
             },
         });
     };
@@ -132,6 +159,21 @@ export default function ARGuideScreen() {
 
         const voiceSettings = await getVoiceSettings();
         setVoiceSettings({ ...voiceSettings, enabled: newVoiceEnabled });
+    };
+
+    const handleRescan = () => {
+        navigationEngine.current.stopNavigation();
+        resetVoiceSettings();
+        setShowArrival(false);
+        router.push('/');
+    };
+
+    const handleStartNew = () => {
+        setShowArrival(false);
+        router.push({
+            pathname: '/destinations',
+            params: { startLocationId },
+        });
     };
 
     // Handle camera permissions
@@ -186,7 +228,7 @@ export default function ARGuideScreen() {
                         <View style={[styles.progressFill, { width: `${progress}%` }]} />
                     </View>
                     <Text style={styles.stepsText}>
-                        Step {currentStepIndex + 1} of {route.steps.length}
+                        {currentStepIndex + 1}/{route.steps.length}
                     </Text>
                 </View>
             </View>
@@ -204,6 +246,7 @@ export default function ARGuideScreen() {
                                         outputRange: ['0deg', '360deg'],
                                     }),
                                 },
+                                { scale: arrowPulse },
                             ],
                         },
                     ]}
@@ -232,6 +275,14 @@ export default function ARGuideScreen() {
                             <Ionicons name="list" size={24} color="#fff" />
                         </View>
                         <Text style={styles.controlLabel}>List</Text>
+                    </TouchableOpacity>
+
+                    {/* Re-scan */}
+                    <TouchableOpacity style={styles.controlButton} onPress={handleRescan}>
+                        <View style={styles.iconCircle}>
+                            <Ionicons name="scan" size={24} color="#fff" />
+                        </View>
+                        <Text style={styles.controlLabel}>Re-scan</Text>
                     </TouchableOpacity>
 
                     {/* Voice Toggle */}
@@ -268,6 +319,27 @@ export default function ARGuideScreen() {
                     <Text style={styles.remainingText}>{remainingDistance}m remaining</Text>
                 </View>
             </View>
+
+            {/* Arrival Overlay */}
+            {showArrival && (
+                <View style={styles.arrivalOverlay}>
+                    <View style={styles.arrivalCard}>
+                        <Ionicons name="checkmark-circle" size={36} color={COLORS.success} style={{ marginBottom: 12 }} />
+                        <Text style={styles.arrivalTitle}>Arrived</Text>
+                        <Text style={styles.arrivalText}>{destination.name}</Text>
+                        <View style={styles.arrivalActions}>
+                            <TouchableOpacity style={styles.arrivalButton} onPress={handleRescan}>
+                                <Ionicons name="scan" size={16} color={COLORS.text} style={{ marginRight: 6 }} />
+                                <Text style={styles.arrivalButtonText}>Re-scan QR</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.arrivalButton, styles.primaryArrivalButton]} onPress={handleStartNew}>
+                                <Ionicons name="navigate" size={16} color="#fff" style={{ marginRight: 6 }} />
+                                <Text style={[styles.arrivalButtonText, styles.primaryArrivalButtonText]}>New Route</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            )}
         </View>
     );
 }
@@ -352,18 +424,19 @@ const styles = StyleSheet.create({
         right: 20,
     },
     glassCard: {
-        backgroundColor: 'rgba(255, 255, 255, 0.15)',
-        borderRadius: 20,
-        padding: 20,
+        backgroundColor: 'rgba(255, 255, 255, 0.12)',
+        borderRadius: 18,
+        paddingVertical: 14,
+        paddingHorizontal: 16,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.2)',
+        borderColor: 'rgba(255, 255, 255, 0.18)',
     },
     destinationText: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: '600',
         color: '#fff',
         textAlign: 'center',
-        marginBottom: 12,
+        marginBottom: 10,
         textShadowColor: 'rgba(0, 0, 0, 0.3)',
         textShadowOffset: { width: 0, height: 1 },
         textShadowRadius: 4,
@@ -381,8 +454,8 @@ const styles = StyleSheet.create({
         borderRadius: 2,
     },
     stepsText: {
-        fontSize: 14,
-        color: 'rgba(255, 255, 255, 0.9)',
+        fontSize: 13,
+        color: 'rgba(255, 255, 255, 0.85)',
         textAlign: 'center',
         textShadowColor: 'rgba(0, 0, 0, 0.3)',
         textShadowOffset: { width: 0, height: 1 },
@@ -397,10 +470,14 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     arrowWrapper: {
-        width: 120,
-        height: 120,
+        width: 130,
+        height: 130,
         alignItems: 'center',
         justifyContent: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        borderRadius: 65,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.18)',
     },
     arrow: {
         alignItems: 'center',
@@ -439,10 +516,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     instructionCard: {
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        backgroundColor: 'rgba(0, 0, 0, 0.55)',
         borderRadius: 16,
-        paddingVertical: 16,
-        paddingHorizontal: 24,
+        paddingVertical: 14,
+        paddingHorizontal: 20,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -466,29 +543,29 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.4)',
-        paddingBottom: 40,
-        paddingTop: 20,
+        backgroundColor: 'rgba(0, 0, 0, 0.35)',
+        paddingBottom: 36,
+        paddingTop: 16,
     },
     controlsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-around',
-        paddingHorizontal: 40,
-        marginBottom: 16,
+        paddingHorizontal: 24,
+        marginBottom: 12,
     },
     controlButton: {
         alignItems: 'center',
     },
     iconCircle: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        width: 52,
+        height: 52,
+        borderRadius: 26,
+        backgroundColor: 'rgba(255, 255, 255, 0.18)',
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 8,
+        marginBottom: 6,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.3)',
+        borderColor: 'rgba(255, 255, 255, 0.28)',
     },
     primaryIconCircle: {
         backgroundColor: COLORS.primary,
@@ -510,5 +587,63 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: 'rgba(255, 255, 255, 0.8)',
         fontWeight: '500',
+    },
+    arrivalOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(15, 23, 42, 0.35)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+    },
+    arrivalCard: {
+        backgroundColor: 'rgba(255, 255, 255, 0.96)',
+        borderRadius: 20,
+        paddingVertical: 24,
+        paddingHorizontal: 20,
+        width: '100%',
+        maxWidth: 360,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.15,
+        shadowRadius: 16,
+        elevation: 8,
+    },
+    arrivalTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: COLORS.text,
+        marginBottom: 4,
+    },
+    arrivalText: {
+        fontSize: 14,
+        color: COLORS.textSecondary,
+        marginBottom: 16,
+    },
+    arrivalActions: {
+        flexDirection: 'row',
+        gap: 10,
+    },
+    arrivalButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        paddingVertical: 10,
+        paddingHorizontal: 12,
+        borderRadius: 10,
+        backgroundColor: '#fff',
+    },
+    arrivalButtonText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: COLORS.text,
+    },
+    primaryArrivalButton: {
+        backgroundColor: COLORS.primary,
+        borderColor: COLORS.primary,
+    },
+    primaryArrivalButtonText: {
+        color: '#fff',
     },
 });

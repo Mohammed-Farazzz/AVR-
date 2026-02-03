@@ -8,6 +8,8 @@ import {
     ScrollView,
     TouchableOpacity,
     Alert,
+    AppState,
+    AppStateStatus,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -15,7 +17,7 @@ import { Route, CampusNode } from '../utils/types';
 import { getCampusMap } from '../services/storageService';
 import { getNavigationEngine } from '../services/navigationService';
 import { watchLocation, stopWatchingLocation } from '../services/locationService';
-import { setVoiceSettings, getVoiceSettings } from '../services/voiceService';
+import { setVoiceSettings, getVoiceSettings, setAppActive, resetVoiceSettings, stopSpeaking } from '../services/voiceService';
 import StepCard from '../components/StepCard';
 import NavigationHeader from '../components/NavigationHeader';
 import { COLORS } from '../utils/constants';
@@ -23,10 +25,11 @@ import type { LocationSubscription } from 'expo-location';
 
 export default function NavigateScreen() {
     const router = useRouter();
-    const { routeData, startLocationId, destinationId } = useLocalSearchParams<{
+    const { routeData, startLocationId, destinationId, currentStepIndex: initialStepIndex } = useLocalSearchParams<{
         routeData: string;
         startLocationId: string;
         destinationId: string;
+        currentStepIndex?: string;
     }>();
 
     const [route, setRoute] = useState<Route | null>(null);
@@ -38,6 +41,7 @@ export default function NavigateScreen() {
     const [voiceEnabled, setVoiceEnabled] = useState(true);
     const [campusNodes, setCampusNodes] = useState<Record<string, CampusNode>>({});
     const [isWrongDirection, setIsWrongDirection] = useState(false);
+    const [showArrival, setShowArrival] = useState(false);
 
     const locationSubscription = useRef<LocationSubscription | null>(null);
     const navigationEngine = useRef(getNavigationEngine());
@@ -51,6 +55,15 @@ export default function NavigateScreen() {
             }
             navigationEngine.current.stopNavigation();
         };
+    }, []);
+
+    useEffect(() => {
+        const handleAppStateChange = (state: AppStateStatus) => {
+            setAppActive(state === 'active');
+        };
+
+        const subscription = AppState.addEventListener('change', handleAppStateChange);
+        return () => subscription.remove();
     }, []);
 
     const initializeNavigation = async () => {
@@ -69,8 +82,14 @@ export default function NavigateScreen() {
         setStartLocation(start);
         setDestination(dest);
 
+        const stepIndex = parseInt(initialStepIndex || '0', 10);
+        const suppressVoice = !Number.isNaN(stepIndex) && stepIndex > 0;
+
         // Initialize navigation engine
-        navigationEngine.current.startNavigation(parsedRoute, start, dest);
+        navigationEngine.current.startNavigation(parsedRoute, start, dest, { suppressVoice });
+        if (!Number.isNaN(stepIndex) && stepIndex > 0) {
+            navigationEngine.current.syncToStepIndex(stepIndex);
+        }
 
         // Load voice settings
         const voiceSettings = await getVoiceSettings();
@@ -107,16 +126,11 @@ export default function NavigateScreen() {
     };
 
     const handleNavigationComplete = () => {
-        Alert.alert(
-            'Navigation Complete',
-            `You have arrived at ${destination?.name}!`,
-            [
-                {
-                    text: 'OK',
-                    onPress: () => router.push('/'),
-                },
-            ]
-        );
+        if (locationSubscription.current) {
+            stopWatchingLocation(locationSubscription.current);
+        }
+        stopSpeaking();
+        setShowArrival(true);
     };
 
     const handleCancel = () => {
@@ -130,11 +144,34 @@ export default function NavigateScreen() {
                     style: 'destructive',
                     onPress: () => {
                         navigationEngine.current.stopNavigation();
+                        resetVoiceSettings();
                         router.push('/');
                     },
                 },
             ]
         );
+    };
+
+    const handleRescan = () => {
+        if (locationSubscription.current) {
+            stopWatchingLocation(locationSubscription.current);
+        }
+        navigationEngine.current.stopNavigation();
+        resetVoiceSettings();
+        setShowArrival(false);
+        router.push('/');
+    };
+
+    const handleStartNew = () => {
+        if (!startLocationId) {
+            handleRescan();
+            return;
+        }
+        setShowArrival(false);
+        router.push({
+            pathname: '/destinations',
+            params: { startLocationId },
+        });
     };
 
     const handleNextStep = () => {
@@ -260,6 +297,29 @@ export default function NavigateScreen() {
                     <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 6 }} />
                 </TouchableOpacity>
             </View>
+
+            {/* Arrival Overlay */}
+            {showArrival && (
+                <View style={styles.arrivalOverlay}>
+                    <View style={styles.arrivalCard}>
+                        <Ionicons name="checkmark-circle" size={36} color={COLORS.success} style={{ marginBottom: 12 }} />
+                        <Text style={styles.arrivalTitle}>Arrived</Text>
+                        <Text style={styles.arrivalText}>
+                            {destination.name}
+                        </Text>
+                        <View style={styles.arrivalActions}>
+                            <TouchableOpacity style={styles.arrivalButton} onPress={handleRescan}>
+                                <Ionicons name="scan" size={16} color={COLORS.text} style={{ marginRight: 6 }} />
+                                <Text style={styles.arrivalButtonText}>Re-scan QR</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.arrivalButton, styles.primaryArrivalButton]} onPress={handleStartNew}>
+                                <Ionicons name="navigate" size={16} color="#fff" style={{ marginRight: 6 }} />
+                                <Text style={[styles.arrivalButtonText, styles.primaryArrivalButtonText]}>New Route</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            )}
         </View>
     );
 }
@@ -382,5 +442,63 @@ const styles = StyleSheet.create({
     warningText: {
         fontSize: 14,
         color: '#991b1b',
+    },
+    arrivalOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(15, 23, 42, 0.35)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+    },
+    arrivalCard: {
+        backgroundColor: 'rgba(255, 255, 255, 0.96)',
+        borderRadius: 20,
+        paddingVertical: 24,
+        paddingHorizontal: 20,
+        width: '100%',
+        maxWidth: 360,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.15,
+        shadowRadius: 16,
+        elevation: 8,
+    },
+    arrivalTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: COLORS.text,
+        marginBottom: 4,
+    },
+    arrivalText: {
+        fontSize: 14,
+        color: COLORS.textSecondary,
+        marginBottom: 16,
+    },
+    arrivalActions: {
+        flexDirection: 'row',
+        gap: 10,
+    },
+    arrivalButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        paddingVertical: 10,
+        paddingHorizontal: 12,
+        borderRadius: 10,
+        backgroundColor: '#fff',
+    },
+    arrivalButtonText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: COLORS.text,
+    },
+    primaryArrivalButton: {
+        backgroundColor: COLORS.primary,
+        borderColor: COLORS.primary,
+    },
+    primaryArrivalButtonText: {
+        color: '#fff',
     },
 });

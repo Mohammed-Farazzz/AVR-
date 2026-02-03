@@ -32,7 +32,7 @@ export const DIRECTION_DEGREES: Record<Direction, number> = {
 };
 
 // Direction tolerance for wrong-direction detection (degrees)
-export const DIRECTION_TOLERANCE = 45; // ±45 degrees from expected direction
+export const DIRECTION_TOLERANCE = 45; // +/-45 degrees from expected direction
 
 // Minimum speed to validate direction (meters per second)
 // Below this speed, we assume user is stationary and don't check direction
@@ -50,12 +50,12 @@ export const DIRECTION_NAMES: Record<Direction, string> = {
     southwest: 'Southwest',
 };
 
-// Location type icons (using emoji for simplicity)
+// Location type icons (Ionicons names)
 export const LOCATION_ICONS: Record<LocationType, string> = {
-    entrance: '🚪',
-    building: '🏢',
-    facility: '🏛️',
-    landmark: '📍',
+    entrance: 'log-in-outline',
+    building: 'business-outline',
+    facility: 'grid-outline',
+    landmark: 'location-outline',
 };
 
 // Color scheme

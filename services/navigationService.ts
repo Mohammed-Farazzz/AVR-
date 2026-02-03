@@ -3,7 +3,7 @@
 import { Route, NavigationStep, NavigationState, UserLocation, CampusNode } from '../utils/types';
 import { calculateDistance, isCorrectDirection } from '../utils/pathfinding';
 import { STEP_COMPLETION_THRESHOLD, DIRECTION_DEGREES, DIRECTION_TOLERANCE, MIN_SPEED_FOR_DIRECTION_CHECK, DIRECTION_NAMES } from '../utils/constants';
-import { speakNavigationStep, announceArrival, announceNearbyEvent, announceWrongDirection, announceDirectionCorrected } from './voiceService';
+import { speakNavigationStep, announceArrival, announceNearbyEvent, announceWrongDirection, announceDirectionCorrected, stopSpeaking } from './voiceService';
 
 /**
  * Navigation engine class to manage active navigation
@@ -30,7 +30,12 @@ export class NavigationEngine {
     /**
      * Start navigation with a route
      */
-    startNavigation(route: Route, startLocation: CampusNode, destination: CampusNode): void {
+    startNavigation(
+        route: Route,
+        startLocation: CampusNode,
+        destination: CampusNode,
+        options?: { suppressVoice?: boolean }
+    ): void {
         this.state = {
             currentRoute: route,
             currentStepIndex: 0,
@@ -46,7 +51,7 @@ export class NavigationEngine {
         this.lastSpeed = 0;
 
         // Announce first step
-        if (route.steps.length > 0) {
+        if (route.steps.length > 0 && !options?.suppressVoice) {
             const firstStep = route.steps[0];
             speakNavigationStep(firstStep.instruction, 1, route.steps.length);
         }
@@ -69,6 +74,7 @@ export class NavigationEngine {
         this.isWrongDirection = false;
         this.wrongDirectionAnnounced = false;
         this.lastSpeed = 0;
+        stopSpeaking();
     }
 
     /**
@@ -241,6 +247,22 @@ export class NavigationEngine {
         if (this.state.currentStepIndex < this.state.currentRoute.steps.length - 1) {
             this.completeCurrentStep();
         }
+    }
+
+    /**
+     * Sync navigation to a specific step index (0-based)
+     */
+    syncToStepIndex(stepIndex: number): void {
+        if (!this.state.currentRoute) return;
+
+        const clampedIndex = Math.max(0, Math.min(stepIndex, this.state.currentRoute.steps.length - 1));
+        this.state.currentStepIndex = clampedIndex;
+        this.state.distanceTraveled = 0;
+
+        // Mark previous steps completed for UI consistency
+        this.state.currentRoute.steps.forEach((step, index) => {
+            step.completed = index < clampedIndex;
+        });
     }
 
     /**

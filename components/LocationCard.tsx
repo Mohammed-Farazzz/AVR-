@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { CampusNode } from '../utils/types';
 import { COLORS, LOCATION_ICONS } from '../utils/constants';
 
@@ -16,7 +17,11 @@ export default function LocationCard({ location, distance, onPress }: LocationCa
         <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
             {/* Icon */}
             <View style={styles.iconContainer}>
-                <Text style={styles.icon}>{LOCATION_ICONS[location.type]}</Text>
+                <Ionicons
+                    name={LOCATION_ICONS[location.type] as any}
+                    size={22}
+                    color={COLORS.primary}
+                />
             </View>
 
             {/* Content */}
@@ -30,7 +35,8 @@ export default function LocationCard({ location, distance, onPress }: LocationCa
                 )}
                 {location.hasEvent && location.eventInfo && (
                     <View style={styles.eventBadge}>
-                        <Text style={styles.eventText}>🎯 {location.eventInfo}</Text>
+                        <Ionicons name="calendar-outline" size={12} color="#92400e" style={styles.eventIcon} />
+                        <Text style={styles.eventText}>{location.eventInfo}</Text>
                     </View>
                 )}
             </View>
@@ -69,9 +75,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginRight: 12,
     },
-    icon: {
-        fontSize: 24,
-    },
     content: {
         flex: 1,
     },
@@ -98,6 +101,11 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         marginTop: 6,
         alignSelf: 'flex-start',
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    eventIcon: {
+        marginRight: 6,
     },
     eventText: {
         fontSize: 11,

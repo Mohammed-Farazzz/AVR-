@@ -5,6 +5,7 @@ import { VoiceSettings } from '../utils/types';
 import { DEFAULT_VOICE_SETTINGS } from '../utils/constants';
 
 let currentSettings: VoiceSettings = DEFAULT_VOICE_SETTINGS;
+let isAppActive = true;
 
 /**
  * Set voice settings
@@ -33,11 +34,12 @@ export async function speak(
 ): Promise<void> {
     const voiceConfig = { ...currentSettings, ...settings };
 
-    if (!voiceConfig.enabled) {
+    if (!voiceConfig.enabled || !isAppActive) {
         return;
     }
 
     try {
+        Speech.stop();
         await Speech.speak(text, {
             language: voiceConfig.language,
             pitch: voiceConfig.pitch,
@@ -78,6 +80,24 @@ export function resumeSpeaking(): void {
 }
 
 /**
+ * Set whether the app is active (foreground) for voice guidance
+ */
+export function setAppActive(active: boolean): void {
+    isAppActive = active;
+    if (!active) {
+        Speech.stop();
+    }
+}
+
+/**
+ * Reset voice settings to defaults
+ */
+export function resetVoiceSettings(): void {
+    currentSettings = { ...DEFAULT_VOICE_SETTINGS };
+    Speech.stop();
+}
+
+/**
  * Speak a navigation step instruction
  * @param instruction - Navigation instruction text
  * @param stepNumber - Current step number
@@ -88,8 +108,7 @@ export async function speakNavigationStep(
     stepNumber: number,
     totalSteps: number
 ): Promise<void> {
-    const text = `Step ${stepNumber} of ${totalSteps}. ${instruction}`;
-    await speak(text);
+    await speak(instruction);
 }
 
 /**
