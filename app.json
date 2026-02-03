@@ -1,44 +1,45 @@
 {
-    "expo": {
-        "name": "CampusNav",
-        "slug": "campusnav",
-        "version": "1.0.0",
-        "orientation": "portrait",
-        "entryPoint": "expo-router/entry",
-        "icon": "./assets/icon.png",
-        "userInterfaceStyle": "light",
-        "splash": {
-            "image": "./assets/splash.png",
-            "resizeMode": "contain",
-            "backgroundColor": "#ffffff"
-        },
-        "assetBundlePatterns": [
-            "**/*"
-        ],
-        "ios": {
-            "supportsTablet": true,
-            "infoPlist": {
-                "NSCameraUsageDescription": "This app uses the camera to scan QR codes for location detection.",
-                "NSLocationWhenInUseUsageDescription": "This app uses your location to provide navigation guidance."
-            }
-        },
-        "android": {
-            "adaptiveIcon": {
-                "foregroundImage": "./assets/adaptive-icon.png",
-                "backgroundColor": "#ffffff"
-            },
-            "permissions": [
-                "CAMERA",
-                "ACCESS_FINE_LOCATION",
-                "ACCESS_COARSE_LOCATION"
-            ]
-        },
-        "web": {
-            "favicon": "./assets/favicon.png"
-        },
-        "scheme": "campusnav",
-        "plugins": [
-            "expo-router"
-        ]
-    }
+  "expo": {
+    "name": "CampusNav",
+    "slug": "campusnav",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "entryPoint": "expo-router/entry",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to scan QR codes for location detection.",
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to provide navigation guidance."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
+      "package": "com.anonymous.campusnav"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "scheme": "campusnav",
+    "plugins": [
+      "expo-router"
+    ]
+  }
 }
