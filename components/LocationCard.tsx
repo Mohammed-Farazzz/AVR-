@@ -4,7 +4,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CampusNode } from '../utils/types';
-import { COLORS, LOCATION_ICONS, RADII, SHADOWS, SPACING } from '../utils/constants';
+import { COLORS, LOCATION_ICONS, LOCATION_ICON_OVERRIDES, RADII, SHADOWS, SPACING } from '../utils/constants';
 
 interface LocationCardProps {
     location: CampusNode;
@@ -18,7 +18,7 @@ export default function LocationCard({ location, distance, onPress }: LocationCa
             {/* Icon */}
             <View style={styles.iconContainer}>
                 <Ionicons
-                    name={LOCATION_ICONS[location.type] as any}
+                    name={(LOCATION_ICON_OVERRIDES[location.id] || LOCATION_ICONS[location.type]) as any}
                     size={22}
                     color={COLORS.primary}
                 />

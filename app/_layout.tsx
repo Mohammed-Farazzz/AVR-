@@ -2,12 +2,22 @@
 
 import { Stack } from 'expo-router';
 import { useEffect } from 'react';
+import * as SplashScreen from 'expo-splash-screen';
 import { initializeAppData } from '../services/storageService';
+
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
     useEffect(() => {
-        // Initialize app data on startup
-        initializeAppData();
+        const prepare = async () => {
+            await initializeAppData();
+        };
+
+        prepare()
+            .catch(() => {})
+            .finally(() => {
+                SplashScreen.hideAsync().catch(() => {});
+            });
     }, []);
 
     return (

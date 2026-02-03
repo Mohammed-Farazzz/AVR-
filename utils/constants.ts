@@ -58,6 +58,11 @@ export const LOCATION_ICONS: Record<LocationType, string> = {
     landmark: 'location-outline',
 };
 
+export const LOCATION_ICON_OVERRIDES: Record<string, string> = {
+    canteen: 'fast-food-outline',
+    playground: 'football-outline',
+};
+
 // Color scheme
 export const COLORS = {
     primary: '#007AFF', // Action Blue

@@ -252,8 +252,7 @@ export default function ARGuideScreen() {
                     ]}
                 >
                     <View style={styles.arrow}>
-                        <View style={styles.arrowHead} />
-                        <View style={styles.arrowBody} />
+                        <Ionicons name="arrow-up" size={72} color="#fff" />
                     </View>
                 </Animated.View>
             </View>
@@ -301,12 +300,10 @@ export default function ARGuideScreen() {
                     <TouchableOpacity
                         style={styles.controlButton}
                         onPress={handleNextStep}
-                        disabled={currentStepIndex >= route.steps.length - 1}
                     >
                         <View style={[
                             styles.iconCircle,
-                            styles.primaryIconCircle,
-                            currentStepIndex >= route.steps.length - 1 && styles.disabledIconCircle
+                            styles.primaryIconCircle
                         ]}>
                             <Ionicons name="arrow-forward" size={24} color="#fff" />
                         </View>
@@ -481,31 +478,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    arrowHead: {
-        width: 0,
-        height: 0,
-        borderLeftWidth: 30,
-        borderRightWidth: 30,
-        borderBottomWidth: 40,
-        borderLeftColor: 'transparent',
-        borderRightColor: 'transparent',
-        borderBottomColor: '#fff',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.4,
-        shadowRadius: 8,
-        elevation: 8,
-    },
-    arrowBody: {
-        width: 24,
-        height: 60,
-        backgroundColor: '#fff',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.4,
-        shadowRadius: 8,
-        elevation: 8,
-    },
     instructionContainer: {
         position: 'absolute',
         bottom: 180,
@@ -570,10 +542,6 @@ const styles = StyleSheet.create({
     primaryIconCircle: {
         backgroundColor: COLORS.primary,
         borderColor: COLORS.primary,
-    },
-    disabledIconCircle: {
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        borderColor: 'rgba(255, 255, 255, 0.2)',
     },
     controlLabel: {
         fontSize: 12,

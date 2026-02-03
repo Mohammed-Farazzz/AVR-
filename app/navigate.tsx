@@ -175,6 +175,10 @@ export default function NavigateScreen() {
     };
 
     const handleNextStep = () => {
+        if (currentStepIndex >= (route?.steps.length || 0) - 1) {
+            handleNavigationComplete();
+            return;
+        }
         navigationEngine.current.nextStep();
         updateNavigationState();
     };
@@ -292,7 +296,6 @@ export default function NavigateScreen() {
                 <TouchableOpacity
                     style={[styles.controlButton, styles.nextButton]}
                     onPress={handleNextStep}
-                    disabled={currentStepIndex >= route.steps.length - 1}
                 >
                     <Text style={styles.controlButtonText}>Next Step</Text>
                     <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 6 }} />
@@ -379,7 +382,7 @@ const styles = StyleSheet.create({
     statValue: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: COLORS.primary,
+        color: COLORS.text,
         marginBottom: 4,
     },
     statLabel: {
@@ -409,13 +412,13 @@ const styles = StyleSheet.create({
         ...SHADOWS.soft,
     },
     voiceButton: {
-        backgroundColor: COLORS.secondary,
+        backgroundColor: COLORS.text,
     },
     arButton: {
-        backgroundColor: COLORS.primary,
+        backgroundColor: COLORS.text,
     },
     nextButton: {
-        backgroundColor: COLORS.primary,
+        backgroundColor: COLORS.text,
     },
     controlButtonText: {
         color: '#fff',
