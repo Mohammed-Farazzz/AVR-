@@ -1,7 +1,7 @@
 {
     "expo": {
-        "name": "CampusNav",
-        "slug": "campusnav",
+        "name": "UniWay",
+        "slug": "uniway",
         "version": "1.0.0",
         "orientation": "portrait",
         "entryPoint": "expo-router/entry",
@@ -23,7 +23,12 @@
                 "ACCESS_COARSE_LOCATION"
             ]
         },
-        "scheme": "campusnav",
+        "scheme": "uniway",
+        "splash": {
+            "image": "./uniway-logo.png",
+            "resizeMode": "contain",
+            "backgroundColor": "#000000"
+        },
         "plugins": [
             "expo-router"
         ]

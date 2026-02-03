@@ -4,7 +4,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CampusNode } from '../utils/types';
-import { COLORS, LOCATION_ICONS } from '../utils/constants';
+import { COLORS, LOCATION_ICONS, RADII, SHADOWS, SPACING } from '../utils/constants';
 
 interface LocationCardProps {
     location: CampusNode;
@@ -54,23 +54,17 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: COLORS.card,
-        borderRadius: 12,
-        padding: 16,
-        marginVertical: 6,
-        marginHorizontal: 16,
-        borderWidth: 1,
-        borderColor: COLORS.border,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 2,
+        borderRadius: RADII.card,
+        padding: SPACING.cardPadding,
+        marginVertical: SPACING.cardMarginVertical,
+        marginHorizontal: SPACING.cardMarginHorizontal,
+        ...SHADOWS.soft,
     },
     iconContainer: {
         width: 50,
         height: 50,
         borderRadius: 25,
-        backgroundColor: COLORS.background,
+        backgroundColor: '#F7F7FB',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
@@ -79,8 +73,8 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     name: {
-        fontSize: 16,
-        fontWeight: '600',
+        fontSize: 17,
+        fontWeight: '700',
         color: COLORS.text,
         marginBottom: 4,
     },
@@ -95,10 +89,10 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     eventBadge: {
-        backgroundColor: '#fef3c7',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 6,
+        backgroundColor: 'rgba(255, 159, 10, 0.12)',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 12,
         marginTop: 6,
         alignSelf: 'flex-start',
         flexDirection: 'row',
@@ -109,7 +103,7 @@ const styles = StyleSheet.create({
     },
     eventText: {
         fontSize: 11,
-        color: '#92400e',
+        color: COLORS.warning,
         fontWeight: '500',
     },
     arrowContainer: {

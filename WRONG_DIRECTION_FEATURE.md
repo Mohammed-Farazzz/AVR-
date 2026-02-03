@@ -2,7 +2,7 @@
 
 ## Overview
 
-Added comprehensive wrong-direction detection to the Campus Navigator app to prevent users from walking in the wrong direction and wasting time.
+Added comprehensive wrong-direction detection to the UniWay app to prevent users from walking in the wrong direction and wasting time.
 
 ## Implementation Details
 

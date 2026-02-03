@@ -180,6 +180,7 @@ export function getAvailableDestinations(
 
     for (const nodeId in campusMap.nodes) {
         if (nodeId === startId) continue;
+        if (campusMap.nodes[nodeId].type === 'landmark') continue;
 
         const route = findRoute(campusMap, startId, nodeId, requireAccessible);
         if (route) {

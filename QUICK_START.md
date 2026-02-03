@@ -1,4 +1,4 @@
-# 🎯 Campus Navigator - Quick Start
+# UniWay - Quick Start
 
 ## ✅ What's Been Built
 
@@ -13,14 +13,14 @@ A complete React Native Expo campus navigation app with:
 ## 📦 Project Location
 
 ```
-d:\React Native\CampusNav\
+d:\React Native\UniWay\
 ```
 
 ## 🚀 How to Run (After Installing Node.js)
 
 1. **Open terminal in project folder:**
    ```bash
-   cd "d:\React Native\CampusNav"
+   cd "d:\React Native\UniWay"
    ```
 
 2. **Install dependencies:**
@@ -67,7 +67,7 @@ Use any online QR generator: https://www.qr-code-generator.com/
 ## 📂 Project Files
 
 ```
-CampusNav/
+UniWay/
 ├── app/              # 3 screens (QR scanner, destinations, navigation)
 ├── components/       # 3 UI components
 ├── services/         # 5 services (navigation, GPS, voice, QR, storage)

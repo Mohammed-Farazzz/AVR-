@@ -60,17 +60,39 @@ export const LOCATION_ICONS: Record<LocationType, string> = {
 
 // Color scheme
 export const COLORS = {
-    primary: '#2563eb', // Blue
-    secondary: '#7c3aed', // Purple
-    success: '#10b981', // Green
-    warning: '#f59e0b', // Orange
-    danger: '#ef4444', // Red
-    background: '#f8fafc',
-    card: '#ffffff',
-    text: '#1e293b',
-    textSecondary: '#64748b',
-    border: '#e2e8f0',
-    accessible: '#059669', // Green for accessible routes
+    primary: '#007AFF', // Action Blue
+    secondary: '#5856D6', // Indigo
+    success: '#34C759', // Apple Green
+    warning: '#FF9F0A', // Orange
+    danger: '#FF3B30', // Apple Red
+    background: '#F2F2F7',
+    card: '#FFFFFF',
+    text: '#1C1C1E',
+    textSecondary: '#8E8E93',
+    border: 'transparent',
+    accessible: '#34C759',
+};
+
+export const RADII = {
+    card: 20,
+    button: 20,
+    pill: 999,
+};
+
+export const SHADOWS = {
+    soft: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 12,
+        elevation: 4,
+    },
+};
+
+export const SPACING = {
+    cardPadding: 20,
+    cardMarginHorizontal: 16,
+    cardMarginVertical: 10,
 };
 
 // QR Code prefixes

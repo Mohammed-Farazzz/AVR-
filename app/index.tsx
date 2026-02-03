@@ -1,6 +1,6 @@
 // Home Screen - QR Code Scanner
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CameraView, BarcodeScanningResult } from 'expo-camera';
@@ -8,19 +8,26 @@ import { useRouter } from 'expo-router';
 import { CampusNode } from '../utils/types';
 import { requestCameraPermission, processQRCode } from '../services/qrService';
 import { getCampusMap, saveLastLocation } from '../services/storageService';
-import { COLORS } from '../utils/constants';
+import { COLORS, RADII, SHADOWS } from '../utils/constants';
 
 export default function HomeScreen() {
     const router = useRouter();
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const [scanned, setScanned] = useState(false);
     const [scannedLocation, setScannedLocation] = useState<CampusNode | null>(null);
+    const navigationTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         (async () => {
             const granted = await requestCameraPermission();
             setHasPermission(granted);
         })();
+
+        return () => {
+            if (navigationTimeout.current) {
+                clearTimeout(navigationTimeout.current);
+            }
+        };
     }, []);
 
     const handleBarCodeScanned = async ({ data }: BarcodeScanningResult) => {
@@ -42,7 +49,10 @@ export default function HomeScreen() {
             await saveLastLocation(location);
 
             // Navigate to destination selection after 1 second
-            setTimeout(() => {
+            if (navigationTimeout.current) {
+                clearTimeout(navigationTimeout.current);
+            }
+            navigationTimeout.current = setTimeout(() => {
                 router.push({
                     pathname: '/destinations',
                     params: { startLocationId: location.id },
@@ -55,6 +65,14 @@ export default function HomeScreen() {
                 [{ text: 'OK', onPress: () => setScanned(false) }]
             );
         }
+    };
+
+    const handleRescan = () => {
+        if (navigationTimeout.current) {
+            clearTimeout(navigationTimeout.current);
+        }
+        setScanned(false);
+        setScannedLocation(null);
     };
 
     if (hasPermission === null) {
@@ -88,8 +106,9 @@ export default function HomeScreen() {
         <View style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <Text style={styles.title}>Campus Navigator</Text>
-                <Text style={styles.subtitle}>Scan a QR code to get started</Text>
+                <Text style={styles.title}>UniWay</Text>
+                <Text style={styles.subtitle}>Where are you headed today?</Text>
+                <Text style={styles.tagline}>Your campus, your way.</Text>
             </View>
 
             {/* Camera View */}
@@ -113,6 +132,10 @@ export default function HomeScreen() {
                         <Ionicons name="checkmark-circle" size={64} color="#fff" style={{ marginBottom: 16 }} />
                         <Text style={styles.successText}>Location Found!</Text>
                         <Text style={styles.locationName}>{scannedLocation.name}</Text>
+                        <TouchableOpacity style={styles.successRescanButton} onPress={handleRescan}>
+                            <Ionicons name="scan" size={16} color="#fff" style={{ marginRight: 6 }} />
+                            <Text style={styles.successRescanText}>Re-scan QR</Text>
+                        </TouchableOpacity>
                     </View>
                 )}
             </View>
@@ -128,7 +151,7 @@ export default function HomeScreen() {
                 <View style={styles.instructionRow}>
                     <Ionicons name="navigate-circle" size={16} color={COLORS.textSecondary} style={{ marginRight: 8 }} />
                     <Text style={styles.instructionText}>
-                        Available locations: Main Gate, Admin Block, Library, Computer Lab
+                        Available locations: Main Gate, Admin Block, Library, Computer Lab, Seminar Hall
                     </Text>
                 </View>
             </View>
@@ -137,7 +160,7 @@ export default function HomeScreen() {
             {scanned && !scannedLocation && (
                 <TouchableOpacity
                     style={styles.rescanButton}
-                    onPress={() => setScanned(false)}
+                    onPress={handleRescan}
                 >
                     <Text style={styles.rescanText}>Tap to Scan Again</Text>
                 </TouchableOpacity>
@@ -155,24 +178,32 @@ const styles = StyleSheet.create({
         paddingTop: 60,
         paddingBottom: 20,
         paddingHorizontal: 20,
-        backgroundColor: COLORS.primary,
+        backgroundColor: COLORS.background,
     },
     title: {
         fontSize: 28,
-        fontWeight: 'bold',
-        color: '#fff',
-        marginBottom: 8,
+        fontWeight: '700',
+        color: COLORS.text,
+        marginBottom: 6,
+        letterSpacing: 0.2,
     },
     subtitle: {
         fontSize: 16,
-        color: 'rgba(255, 255, 255, 0.9)',
+        color: COLORS.textSecondary,
+        marginBottom: 4,
+    },
+    tagline: {
+        fontSize: 13,
+        color: COLORS.textSecondary,
+        letterSpacing: 0.3,
     },
     cameraContainer: {
         flex: 1,
         margin: 20,
-        borderRadius: 20,
+        borderRadius: RADII.card,
         overflow: 'hidden',
         backgroundColor: '#000',
+        ...SHADOWS.soft,
     },
     scanFrame: {
         position: 'absolute',
@@ -220,6 +251,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(16, 185, 129, 0.95)',
         justifyContent: 'center',
         alignItems: 'center',
+        paddingHorizontal: 24,
     },
     successText: {
         fontSize: 24,
@@ -230,12 +262,28 @@ const styles = StyleSheet.create({
     locationName: {
         fontSize: 18,
         color: '#fff',
+        marginBottom: 16,
+    },
+    successRescanButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: RADII.button,
+        backgroundColor: 'rgba(255, 255, 255, 0.18)',
+        ...SHADOWS.soft,
+    },
+    successRescanText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '600',
     },
     instructions: {
-        padding: 20,
-        backgroundColor: '#fff',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
+        padding: 22,
+        backgroundColor: COLORS.card,
+        borderTopLeftRadius: RADII.card,
+        borderTopRightRadius: RADII.card,
+        ...SHADOWS.soft,
     },
     instructionRow: {
         flexDirection: 'row',
@@ -254,7 +302,8 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.primary,
         paddingHorizontal: 32,
         paddingVertical: 16,
-        borderRadius: 25,
+        borderRadius: RADII.button,
+        ...SHADOWS.soft,
     },
     rescanText: {
         color: '#fff',
@@ -271,7 +320,8 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.primary,
         paddingHorizontal: 32,
         paddingVertical: 16,
-        borderRadius: 25,
+        borderRadius: RADII.button,
+        ...SHADOWS.soft,
     },
     buttonText: {
         color: '#fff',

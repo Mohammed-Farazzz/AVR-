@@ -9,13 +9,12 @@ import {
     TouchableOpacity,
     ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { CampusNode } from '../utils/types';
 import { getCampusMap } from '../services/storageService';
 import { getAvailableDestinations, findRoute } from '../utils/pathfinding';
 import LocationCard from '../components/LocationCard';
-import { COLORS } from '../utils/constants';
+import { COLORS, RADII, SHADOWS } from '../utils/constants';
 
 export default function DestinationsScreen() {
     const router = useRouter();
@@ -24,11 +23,10 @@ export default function DestinationsScreen() {
     const [loading, setLoading] = useState(true);
     const [startLocation, setStartLocation] = useState<CampusNode | null>(null);
     const [destinations, setDestinations] = useState<Array<{ node: CampusNode; distance: number }>>([]);
-    const [accessibleOnly, setAccessibleOnly] = useState(false);
 
     useEffect(() => {
         loadDestinations();
-    }, [accessibleOnly]);
+    }, []);
 
     const loadDestinations = async () => {
         setLoading(true);
@@ -44,8 +42,7 @@ export default function DestinationsScreen() {
 
         const availableDestinations = getAvailableDestinations(
             campusMap,
-            startLocationId,
-            accessibleOnly
+            startLocationId
         );
 
         setDestinations(availableDestinations);
@@ -58,7 +55,7 @@ export default function DestinationsScreen() {
         const campusMap = await getCampusMap();
         if (!campusMap) return;
 
-        const route = findRoute(campusMap, startLocationId, destination.id, accessibleOnly);
+        const route = findRoute(campusMap, startLocationId, destination.id, false);
         if (!route) return;
 
         router.push({
@@ -88,29 +85,11 @@ export default function DestinationsScreen() {
                     <Text style={styles.backText}>‹</Text>
                 </TouchableOpacity>
                 <View style={styles.headerContent}>
-                    <Text style={styles.title}>Select Destination</Text>
+                    <Text style={styles.title}>Where to next?</Text>
                     {startLocation && (
                         <Text style={styles.subtitle}>From: {startLocation.name}</Text>
                     )}
                 </View>
-            </View>
-
-            {/* Accessibility toggle */}
-            <View style={styles.filterContainer}>
-                <TouchableOpacity
-                    style={[styles.filterButton, accessibleOnly && styles.filterButtonActive]}
-                    onPress={() => setAccessibleOnly(!accessibleOnly)}
-                >
-                    <Ionicons
-                        name="accessibility"
-                        size={18}
-                        color={accessibleOnly ? '#fff' : COLORS.text}
-                        style={{ marginRight: 6 }}
-                    />
-                    <Text style={[styles.filterText, accessibleOnly && styles.filterTextActive]}>
-                        Accessible Routes Only
-                    </Text>
-                </TouchableOpacity>
             </View>
 
             {/* Destinations list */}
@@ -153,10 +132,10 @@ const styles = StyleSheet.create({
         color: COLORS.textSecondary,
     },
     header: {
-        backgroundColor: COLORS.primary,
+        backgroundColor: COLORS.background,
         paddingTop: 50,
-        paddingBottom: 20,
-        paddingHorizontal: 16,
+        paddingBottom: 16,
+        paddingHorizontal: 20,
         flexDirection: 'row',
         alignItems: 'center',
     },
@@ -169,50 +148,25 @@ const styles = StyleSheet.create({
     },
     backText: {
         fontSize: 32,
-        color: '#fff',
-        fontWeight: '300',
+        color: COLORS.text,
+        fontWeight: '400',
     },
     headerContent: {
         flex: 1,
     },
     title: {
         fontSize: 24,
-        fontWeight: 'bold',
-        color: '#fff',
+        fontWeight: '700',
+        color: COLORS.text,
         marginBottom: 4,
     },
     subtitle: {
         fontSize: 14,
-        color: 'rgba(255, 255, 255, 0.9)',
-    },
-    filterContainer: {
-        padding: 16,
-    },
-    filterButton: {
-        backgroundColor: '#fff',
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderRadius: 25,
-        borderWidth: 2,
-        borderColor: COLORS.border,
-        alignItems: 'center',
-        flexDirection: 'row',
-        justifyContent: 'center',
-    },
-    filterButtonActive: {
-        backgroundColor: COLORS.accessible,
-        borderColor: COLORS.accessible,
-    },
-    filterText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: COLORS.text,
-    },
-    filterTextActive: {
-        color: '#fff',
+        color: COLORS.textSecondary,
     },
     listContent: {
-        paddingBottom: 20,
+        paddingBottom: 28,
+        paddingTop: 6,
     },
     emptyContainer: {
         flex: 1,

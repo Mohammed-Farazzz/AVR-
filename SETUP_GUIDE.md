@@ -1,6 +1,6 @@
-# 🚀 Campus Navigator - Complete Setup Guide
+# UniWay - Complete Setup Guide
 
-This guide will walk you through setting up and running the Campus Navigator app from scratch.
+This guide will walk you through setting up and running the UniWay app from scratch.
 
 ## 📋 Table of Contents
 
@@ -67,7 +67,7 @@ npm --version
 ### Step 2.2: Navigate to Project Directory
 
 ```bash
-cd "d:\React Native\CampusNav"
+cd "d:\React Native\UniWay"
 ```
 
 ### Step 2.3: Install Dependencies
@@ -280,7 +280,7 @@ Run: `node generate-qr.js`
 
 **Solution:**
 1. Go to phone Settings
-2. Find "CampusNav" app
+2. Find "UniWay" app
 3. Enable Camera permission
 4. Restart the app
 

@@ -20,7 +20,7 @@ import { watchLocation, stopWatchingLocation } from '../services/locationService
 import { setVoiceSettings, getVoiceSettings, setAppActive, resetVoiceSettings, stopSpeaking } from '../services/voiceService';
 import StepCard from '../components/StepCard';
 import NavigationHeader from '../components/NavigationHeader';
-import { COLORS } from '../utils/constants';
+import { COLORS, RADII, SHADOWS } from '../utils/constants';
 import type { LocationSubscription } from 'expo-location';
 
 export default function NavigateScreen() {
@@ -235,6 +235,7 @@ export default function NavigateScreen() {
             {/* Wrong Direction Warning */}
             {isWrongDirection && (
                 <View style={styles.warningBanner}>
+                    <View style={styles.warningAccent} />
                     <Ionicons name="alert-circle" size={32} color={COLORS.danger} style={{ marginRight: 12 }} />
                     <View style={styles.warningContent}>
                         <Text style={styles.warningTitle}>Wrong Direction!</Text>
@@ -307,6 +308,9 @@ export default function NavigateScreen() {
                         <Text style={styles.arrivalText}>
                             {destination.name}
                         </Text>
+                        <Text style={styles.arrivalSubtext}>
+                            You are all set. We have arrived at your destination.
+                        </Text>
                         <View style={styles.arrivalActions}>
                             <TouchableOpacity style={styles.arrivalButton} onPress={handleRescan}>
                                 <Ionicons name="scan" size={16} color={COLORS.text} style={{ marginRight: 6 }} />
@@ -314,7 +318,7 @@ export default function NavigateScreen() {
                             </TouchableOpacity>
                             <TouchableOpacity style={[styles.arrivalButton, styles.primaryArrivalButton]} onPress={handleStartNew}>
                                 <Ionicons name="navigate" size={16} color="#fff" style={{ marginRight: 6 }} />
-                                <Text style={[styles.arrivalButtonText, styles.primaryArrivalButtonText]}>New Route</Text>
+                                <Text style={[styles.arrivalButtonText, styles.primaryArrivalButtonText]}>Start New Route</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -335,14 +339,16 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     progressContainer: {
-        backgroundColor: '#fff',
-        padding: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
+        backgroundColor: COLORS.card,
+        padding: 18,
+        marginHorizontal: 16,
+        marginTop: 12,
+        borderRadius: RADII.card,
+        ...SHADOWS.soft,
     },
     progressBar: {
         height: 8,
-        backgroundColor: COLORS.border,
+        backgroundColor: '#E5E5EA',
         borderRadius: 4,
         overflow: 'hidden',
         marginBottom: 8,
@@ -358,12 +364,14 @@ const styles = StyleSheet.create({
     },
     statsContainer: {
         flexDirection: 'row',
-        backgroundColor: '#fff',
-        paddingVertical: 16,
+        backgroundColor: COLORS.card,
+        paddingVertical: 18,
         paddingHorizontal: 20,
         justifyContent: 'space-around',
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
+        marginHorizontal: 16,
+        marginTop: 12,
+        borderRadius: RADII.card,
+        ...SHADOWS.soft,
     },
     statItem: {
         alignItems: 'center',
@@ -380,6 +388,7 @@ const styles = StyleSheet.create({
     },
     stepsContainer: {
         flex: 1,
+        marginTop: 12,
     },
     stepsContent: {
         paddingVertical: 8,
@@ -387,18 +396,17 @@ const styles = StyleSheet.create({
     controls: {
         flexDirection: 'row',
         padding: 16,
-        backgroundColor: '#fff',
-        borderTopWidth: 1,
-        borderTopColor: COLORS.border,
+        backgroundColor: COLORS.background,
         gap: 8,
     },
     controlButton: {
         flex: 1,
         paddingVertical: 14,
-        borderRadius: 12,
+        borderRadius: RADII.button,
         alignItems: 'center',
         justifyContent: 'center',
         flexDirection: 'row',
+        ...SHADOWS.soft,
     },
     voiceButton: {
         backgroundColor: COLORS.secondary,
@@ -415,20 +423,21 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     warningBanner: {
-        backgroundColor: '#fef2f2',
-        borderLeftWidth: 4,
-        borderLeftColor: COLORS.danger,
+        backgroundColor: '#FFF5F5',
         padding: 16,
         flexDirection: 'row',
         alignItems: 'center',
         marginHorizontal: 16,
-        marginVertical: 8,
-        borderRadius: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
+        marginVertical: 10,
+        borderRadius: RADII.card,
+        ...SHADOWS.soft,
+    },
+    warningAccent: {
+        width: 4,
+        alignSelf: 'stretch',
+        borderRadius: 2,
+        backgroundColor: COLORS.danger,
+        marginRight: 12,
     },
     warningContent: {
         flex: 1,
@@ -441,28 +450,24 @@ const styles = StyleSheet.create({
     },
     warningText: {
         fontSize: 14,
-        color: '#991b1b',
+        color: COLORS.textSecondary,
     },
     arrivalOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(15, 23, 42, 0.35)',
+        backgroundColor: 'rgba(28, 28, 30, 0.25)',
         alignItems: 'center',
         justifyContent: 'center',
         padding: 24,
     },
     arrivalCard: {
-        backgroundColor: 'rgba(255, 255, 255, 0.96)',
-        borderRadius: 20,
-        paddingVertical: 24,
-        paddingHorizontal: 20,
+        backgroundColor: COLORS.card,
+        borderRadius: RADII.card,
+        paddingVertical: 26,
+        paddingHorizontal: 22,
         width: '100%',
         maxWidth: 360,
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.15,
-        shadowRadius: 16,
-        elevation: 8,
+        ...SHADOWS.soft,
     },
     arrivalTitle: {
         fontSize: 18,
@@ -473,6 +478,12 @@ const styles = StyleSheet.create({
     arrivalText: {
         fontSize: 14,
         color: COLORS.textSecondary,
+        marginBottom: 6,
+    },
+    arrivalSubtext: {
+        fontSize: 13,
+        color: COLORS.textSecondary,
+        textAlign: 'center',
         marginBottom: 16,
     },
     arrivalActions: {
@@ -482,12 +493,11 @@ const styles = StyleSheet.create({
     arrivalButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        borderWidth: 1,
-        borderColor: COLORS.border,
         paddingVertical: 10,
-        paddingHorizontal: 12,
-        borderRadius: 10,
-        backgroundColor: '#fff',
+        paddingHorizontal: 14,
+        borderRadius: RADII.button,
+        backgroundColor: '#F7F7FB',
+        ...SHADOWS.soft,
     },
     arrivalButtonText: {
         fontSize: 12,
@@ -496,7 +506,6 @@ const styles = StyleSheet.create({
     },
     primaryArrivalButton: {
         backgroundColor: COLORS.primary,
-        borderColor: COLORS.primary,
     },
     primaryArrivalButtonText: {
         color: '#fff',

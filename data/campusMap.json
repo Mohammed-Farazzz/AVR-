@@ -11,38 +11,82 @@
             "type": "entrance",
             "description": "Main entrance to the campus"
         },
+        "entry_path": {
+            "id": "entry_path",
+            "name": "Entry Walk",
+            "qrCode": "CAMPUS_ENTRY_WALK",
+            "coordinates": {
+                "lat": 0.00014,
+                "lng": 0.0
+            },
+            "type": "landmark",
+            "description": "Tree-lined approach from the main gate"
+        },
         "admin_block": {
             "id": "admin_block",
             "name": "Admin Block",
             "qrCode": "CAMPUS_ADMIN_BLOCK",
             "coordinates": {
                 "lat": 0.00027,
-                "lng": 0.0
+                "lng": 0.00008
             },
             "type": "building",
             "description": "Administrative offices and reception"
+        },
+        "west_walk": {
+            "id": "west_walk",
+            "name": "West Walk",
+            "qrCode": "CAMPUS_WEST_WALK",
+            "coordinates": {
+                "lat": 0.00027,
+                "lng": -0.00032
+            },
+            "type": "landmark",
+            "description": "Quiet path leading toward the library"
         },
         "library": {
             "id": "library",
             "name": "Library",
             "qrCode": "CAMPUS_LIBRARY",
             "coordinates": {
-                "lat": 0.00027,
+                "lat": 0.00030,
                 "lng": -0.00072
             },
             "type": "facility",
             "description": "Campus library with study areas"
+        },
+        "west_garden": {
+            "id": "west_garden",
+            "name": "West Garden",
+            "qrCode": "CAMPUS_WEST_GARDEN",
+            "coordinates": {
+                "lat": 0.00024,
+                "lng": -0.00084
+            },
+            "type": "landmark",
+            "description": "Green courtyard with benches"
         },
         "playground": {
             "id": "playground",
             "name": "Playground",
             "qrCode": "CAMPUS_PLAYGROUND",
             "coordinates": {
-                "lat": 0.00027,
-                "lng": -0.00090
+                "lat": 0.00020,
+                "lng": -0.00098
             },
             "type": "facility",
             "description": "Sports ground and outdoor activities"
+        },
+        "east_walk": {
+            "id": "east_walk",
+            "name": "East Walk",
+            "qrCode": "CAMPUS_EAST_WALK",
+            "coordinates": {
+                "lat": 0.00027,
+                "lng": 0.00028
+            },
+            "type": "landmark",
+            "description": "Connector path toward the labs"
         },
         "computer_lab": {
             "id": "computer_lab",
@@ -50,12 +94,47 @@
             "qrCode": "CAMPUS_COMPUTER_LAB",
             "coordinates": {
                 "lat": 0.00027,
-                "lng": 0.00036
+                "lng": 0.00052
             },
             "type": "building",
             "description": "Computer science labs and workstations",
             "hasEvent": true,
             "eventInfo": "Programming workshop today at 2 PM"
+        },
+        "east_plaza": {
+            "id": "east_plaza",
+            "name": "East Plaza",
+            "qrCode": "CAMPUS_EAST_PLAZA",
+            "coordinates": {
+                "lat": 0.00030,
+                "lng": 0.00078
+            },
+            "type": "landmark",
+            "description": "Open plaza with clear sight lines"
+        },
+        "seminar_hall": {
+            "id": "seminar_hall",
+            "name": "Seminar Hall",
+            "qrCode": "CAMPUS_SEMINAR_HALL",
+            "coordinates": {
+                "lat": 0.00036,
+                "lng": 0.00099
+            },
+            "type": "building",
+            "description": "Large auditorium for events and seminars",
+            "hasEvent": true,
+            "eventInfo": "Guest lecture at 4 PM"
+        },
+        "south_steps": {
+            "id": "south_steps",
+            "name": "South Steps",
+            "qrCode": "CAMPUS_SOUTH_STEPS",
+            "coordinates": {
+                "lat": 0.00012,
+                "lng": 0.00052
+            },
+            "type": "landmark",
+            "description": "Steps leading down to dining"
         },
         "canteen": {
             "id": "canteen",
@@ -67,115 +146,200 @@
             },
             "type": "facility",
             "description": "Campus cafeteria and dining area"
-        },
-        "seminar_hall": {
-            "id": "seminar_hall",
-            "name": "Seminar Hall",
-            "qrCode": "CAMPUS_SEMINAR_HALL",
-            "coordinates": {
-                "lat": 0.00027,
-                "lng": 0.00099
-            },
-            "type": "building",
-            "description": "Large auditorium for events and seminars"
         }
     },
     "edges": [
         {
             "from": "main_gate",
-            "to": "admin_block",
-            "distance": 30,
+            "to": "entry_path",
+            "distance": 18,
             "direction": "north",
             "accessible": true,
-            "instructions": "Walk straight north for 30 meters to Admin Block"
+            "instructions": "Walk straight north for 18 meters along the entry walk"
         },
         {
-            "from": "admin_block",
+            "from": "entry_path",
             "to": "main_gate",
-            "distance": 30,
+            "distance": 18,
             "direction": "south",
             "accessible": true,
-            "instructions": "Walk straight south for 30 meters to Main Gate"
+            "instructions": "Head south for 18 meters back to Main Gate"
+        },
+        {
+            "from": "entry_path",
+            "to": "admin_block",
+            "distance": 22,
+            "direction": "northeast",
+            "accessible": true,
+            "instructions": "Slight right and continue northeast for 22 meters to Admin Block"
         },
         {
             "from": "admin_block",
-            "to": "library",
-            "distance": 60,
-            "direction": "west",
+            "to": "entry_path",
+            "distance": 22,
+            "direction": "southwest",
             "accessible": true,
-            "instructions": "Turn left and walk west for 60 meters to Library"
+            "instructions": "Slight left and head southwest for 22 meters to Entry Walk"
         },
         {
-            "from": "library",
+            "from": "admin_block",
+            "to": "west_walk",
+            "distance": 26,
+            "direction": "west",
+            "accessible": true,
+            "instructions": "Turn left and walk west for 26 meters toward West Walk"
+        },
+        {
+            "from": "west_walk",
             "to": "admin_block",
-            "distance": 60,
+            "distance": 26,
             "direction": "east",
             "accessible": true,
-            "instructions": "Walk east for 60 meters to Admin Block"
+            "instructions": "Walk east for 26 meters back to Admin Block"
+        },
+        {
+            "from": "west_walk",
+            "to": "library",
+            "distance": 34,
+            "direction": "northwest",
+            "accessible": true,
+            "instructions": "Slight left and continue northwest for 34 meters to the Library"
         },
         {
             "from": "library",
+            "to": "west_walk",
+            "distance": 34,
+            "direction": "southeast",
+            "accessible": true,
+            "instructions": "Head southeast for 34 meters back to West Walk"
+        },
+        {
+            "from": "library",
+            "to": "west_garden",
+            "distance": 18,
+            "direction": "southwest",
+            "accessible": true,
+            "instructions": "Turn left and walk southwest for 18 meters to West Garden"
+        },
+        {
+            "from": "west_garden",
+            "to": "library",
+            "distance": 18,
+            "direction": "northeast",
+            "accessible": true,
+            "instructions": "Head northeast for 18 meters back to the Library"
+        },
+        {
+            "from": "west_garden",
             "to": "playground",
             "distance": 20,
-            "direction": "west",
+            "direction": "southwest",
             "accessible": true,
-            "instructions": "Continue west for 20 meters to Playground"
+            "instructions": "Continue southwest for 20 meters to the Playground"
         },
         {
             "from": "playground",
-            "to": "library",
+            "to": "west_garden",
             "distance": 20,
-            "direction": "east",
+            "direction": "northeast",
             "accessible": true,
-            "instructions": "Walk east for 20 meters to Library"
+            "instructions": "Walk northeast for 20 meters back to West Garden"
         },
         {
             "from": "admin_block",
-            "to": "computer_lab",
-            "distance": 40,
+            "to": "east_walk",
+            "distance": 24,
             "direction": "east",
             "accessible": true,
-            "instructions": "Turn right and walk east for 40 meters to Computer Lab"
+            "instructions": "Turn right and walk east for 24 meters to East Walk"
         },
         {
-            "from": "computer_lab",
+            "from": "east_walk",
             "to": "admin_block",
-            "distance": 40,
+            "distance": 24,
             "direction": "west",
             "accessible": true,
-            "instructions": "Walk west for 40 meters to Admin Block"
+            "instructions": "Walk west for 24 meters back to Admin Block"
+        },
+        {
+            "from": "east_walk",
+            "to": "computer_lab",
+            "distance": 22,
+            "direction": "east",
+            "accessible": true,
+            "instructions": "Continue east for 22 meters to the Computer Lab"
         },
         {
             "from": "computer_lab",
-            "to": "seminar_hall",
-            "distance": 70,
+            "to": "east_walk",
+            "distance": 22,
+            "direction": "west",
+            "accessible": true,
+            "instructions": "Walk west for 22 meters back to East Walk"
+        },
+        {
+            "from": "computer_lab",
+            "to": "east_plaza",
+            "distance": 28,
             "direction": "east",
             "accessible": true,
-            "instructions": "Continue east for 70 meters to Seminar Hall"
+            "instructions": "Walk east for 28 meters to the East Plaza"
+        },
+        {
+            "from": "east_plaza",
+            "to": "computer_lab",
+            "distance": 28,
+            "direction": "west",
+            "accessible": true,
+            "instructions": "Head west for 28 meters back to the Computer Lab"
+        },
+        {
+            "from": "east_plaza",
+            "to": "seminar_hall",
+            "distance": 26,
+            "direction": "northeast",
+            "accessible": true,
+            "instructions": "Slight right and continue northeast for 26 meters to Seminar Hall"
         },
         {
             "from": "seminar_hall",
-            "to": "computer_lab",
-            "distance": 70,
-            "direction": "west",
+            "to": "east_plaza",
+            "distance": 26,
+            "direction": "southwest",
             "accessible": true,
-            "instructions": "Walk west for 70 meters to Computer Lab"
+            "instructions": "Slight left and head southwest for 26 meters to East Plaza"
         },
         {
             "from": "computer_lab",
-            "to": "canteen",
-            "distance": 30,
+            "to": "south_steps",
+            "distance": 24,
             "direction": "south",
             "accessible": true,
-            "instructions": "Turn right and walk south for 30 meters to Canteen"
+            "instructions": "Turn right and walk south for 24 meters toward South Steps"
+        },
+        {
+            "from": "south_steps",
+            "to": "computer_lab",
+            "distance": 24,
+            "direction": "north",
+            "accessible": true,
+            "instructions": "Walk north for 24 meters back to the Computer Lab"
+        },
+        {
+            "from": "south_steps",
+            "to": "canteen",
+            "distance": 26,
+            "direction": "southwest",
+            "accessible": true,
+            "instructions": "Slight left and continue southwest for 26 meters to the Canteen"
         },
         {
             "from": "canteen",
-            "to": "computer_lab",
-            "distance": 30,
-            "direction": "north",
+            "to": "south_steps",
+            "distance": 26,
+            "direction": "northeast",
             "accessible": true,
-            "instructions": "Walk north for 30 meters to Computer Lab"
+            "instructions": "Head northeast for 26 meters back to South Steps"
         }
     ]
 }

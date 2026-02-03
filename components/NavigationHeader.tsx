@@ -26,7 +26,7 @@ export default function NavigationHeader({
                     </Text>
                 </View>
                 <View style={styles.arrow}>
-                    <Ionicons name="arrow-forward" size={18} color="#fff" />
+                    <Ionicons name="arrow-forward" size={18} color={COLORS.textSecondary} />
                 </View>
                 <View style={styles.locationInfo}>
                     <Text style={styles.label}>To</Text>
@@ -36,7 +36,7 @@ export default function NavigationHeader({
                 </View>
             </View>
             <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
-                <Ionicons name="close" size={18} color="#fff" />
+                <Ionicons name="close" size={18} color={COLORS.text} />
             </TouchableOpacity>
         </View>
     );
@@ -44,10 +44,10 @@ export default function NavigationHeader({
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: COLORS.primary,
-        paddingTop: 50,
-        paddingBottom: 16,
-        paddingHorizontal: 16,
+        backgroundColor: COLORS.background,
+        paddingTop: 54,
+        paddingBottom: 18,
+        paddingHorizontal: 20,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -62,13 +62,13 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: 11,
-        color: 'rgba(255, 255, 255, 0.7)',
+        color: COLORS.textSecondary,
         marginBottom: 2,
     },
     locationText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#fff',
+        fontSize: 15,
+        fontWeight: '700',
+        color: COLORS.text,
     },
     arrow: {
         marginHorizontal: 8,
@@ -77,9 +77,14 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        backgroundColor: '#FFFFFF',
         justifyContent: 'center',
         alignItems: 'center',
         marginLeft: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 6,
+        elevation: 3,
     },
 });

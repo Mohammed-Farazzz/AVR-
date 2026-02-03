@@ -4,7 +4,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NavigationStep } from '../utils/types';
-import { COLORS, DIRECTION_NAMES } from '../utils/constants';
+import { COLORS, DIRECTION_NAMES, RADII, SHADOWS, SPACING } from '../utils/constants';
 
 interface StepCardProps {
     step: NavigationStep;
@@ -86,21 +86,14 @@ function getDirectionArrow(direction: string): JSX.Element {
 const styles = StyleSheet.create({
     container: {
         backgroundColor: COLORS.card,
-        borderRadius: 16,
-        padding: 20,
-        marginVertical: 8,
-        marginHorizontal: 16,
-        borderWidth: 2,
-        borderColor: COLORS.border,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
+        borderRadius: RADII.card,
+        padding: SPACING.cardPadding,
+        marginVertical: SPACING.cardMarginVertical,
+        marginHorizontal: SPACING.cardMarginHorizontal,
+        ...SHADOWS.soft,
     },
     activeContainer: {
-        borderColor: COLORS.primary,
-        backgroundColor: '#eff6ff',
+        backgroundColor: '#EAF3FF',
     },
     header: {
         flexDirection: 'row',
@@ -109,7 +102,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     stepBadge: {
-        backgroundColor: COLORS.border,
+        backgroundColor: '#ECECF0',
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 12,
@@ -143,7 +136,7 @@ const styles = StyleSheet.create({
     },
     activeInstruction: {
         fontSize: 20,
-        fontWeight: '600',
+        fontWeight: '700',
         color: COLORS.primary,
     },
     details: {

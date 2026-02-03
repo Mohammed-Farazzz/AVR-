@@ -19,7 +19,7 @@ import { Route, CampusNode } from '../utils/types';
 import { getCampusMap } from '../services/storageService';
 import { getNavigationEngine } from '../services/navigationService';
 import { setVoiceSettings, getVoiceSettings, setAppActive, resetVoiceSettings, stopSpeaking } from '../services/voiceService';
-import { COLORS, DIRECTION_DEGREES } from '../utils/constants';
+import { COLORS, DIRECTION_DEGREES, RADII, SHADOWS } from '../utils/constants';
 
 const { width, height } = Dimensions.get('window');
 
@@ -327,6 +327,9 @@ export default function ARGuideScreen() {
                         <Ionicons name="checkmark-circle" size={36} color={COLORS.success} style={{ marginBottom: 12 }} />
                         <Text style={styles.arrivalTitle}>Arrived</Text>
                         <Text style={styles.arrivalText}>{destination.name}</Text>
+                        <Text style={styles.arrivalSubtext}>
+                            You are all set. We have arrived at your destination.
+                        </Text>
                         <View style={styles.arrivalActions}>
                             <TouchableOpacity style={styles.arrivalButton} onPress={handleRescan}>
                                 <Ionicons name="scan" size={16} color={COLORS.text} style={{ marginRight: 6 }} />
@@ -334,7 +337,7 @@ export default function ARGuideScreen() {
                             </TouchableOpacity>
                             <TouchableOpacity style={[styles.arrivalButton, styles.primaryArrivalButton]} onPress={handleStartNew}>
                                 <Ionicons name="navigate" size={16} color="#fff" style={{ marginRight: 6 }} />
-                                <Text style={[styles.arrivalButtonText, styles.primaryArrivalButtonText]}>New Route</Text>
+                                <Text style={[styles.arrivalButtonText, styles.primaryArrivalButtonText]}>Start New Route</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -371,14 +374,10 @@ const styles = StyleSheet.create({
     },
     permissionCard: {
         backgroundColor: '#fff',
-        borderRadius: 24,
-        padding: 32,
+        borderRadius: RADII.card,
+        padding: 28,
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-        elevation: 5,
+        ...SHADOWS.soft,
         maxWidth: 400,
     },
     permissionTitle: {
@@ -399,9 +398,10 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.primary,
         paddingVertical: 16,
         paddingHorizontal: 32,
-        borderRadius: 12,
+        borderRadius: RADII.button,
         marginBottom: 12,
         width: '100%',
+        ...SHADOWS.soft,
     },
     permissionButtonText: {
         color: '#fff',
@@ -425,11 +425,10 @@ const styles = StyleSheet.create({
     },
     glassCard: {
         backgroundColor: 'rgba(255, 255, 255, 0.12)',
-        borderRadius: 18,
+        borderRadius: RADII.card,
         paddingVertical: 14,
         paddingHorizontal: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.18)',
+        overflow: 'hidden',
     },
     destinationText: {
         fontSize: 18,
@@ -476,8 +475,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         backgroundColor: 'rgba(255, 255, 255, 0.08)',
         borderRadius: 65,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.18)',
+        overflow: 'hidden',
     },
     arrow: {
         alignItems: 'center',
@@ -516,8 +514,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     instructionCard: {
-        backgroundColor: 'rgba(0, 0, 0, 0.55)',
-        borderRadius: 16,
+        backgroundColor: 'rgba(10, 15, 25, 0.5)',
+        borderRadius: RADII.card,
         paddingVertical: 14,
         paddingHorizontal: 20,
         flexDirection: 'row',
@@ -525,6 +523,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         maxWidth: 400,
         width: '100%',
+        overflow: 'hidden',
     },
     instructionText: {
         fontSize: 16,
@@ -543,9 +542,12 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.35)',
+        backgroundColor: 'rgba(10, 10, 10, 0.28)',
         paddingBottom: 36,
         paddingTop: 16,
+        borderTopLeftRadius: RADII.card,
+        borderTopRightRadius: RADII.card,
+        overflow: 'hidden',
     },
     controlsContainer: {
         flexDirection: 'row',
@@ -564,8 +566,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 6,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.28)',
     },
     primaryIconCircle: {
         backgroundColor: COLORS.primary,
@@ -590,24 +590,20 @@ const styles = StyleSheet.create({
     },
     arrivalOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(15, 23, 42, 0.35)',
+        backgroundColor: 'rgba(28, 28, 30, 0.25)',
         alignItems: 'center',
         justifyContent: 'center',
         padding: 24,
     },
     arrivalCard: {
-        backgroundColor: 'rgba(255, 255, 255, 0.96)',
-        borderRadius: 20,
-        paddingVertical: 24,
-        paddingHorizontal: 20,
+        backgroundColor: COLORS.card,
+        borderRadius: RADII.card,
+        paddingVertical: 26,
+        paddingHorizontal: 22,
         width: '100%',
         maxWidth: 360,
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.15,
-        shadowRadius: 16,
-        elevation: 8,
+        ...SHADOWS.soft,
     },
     arrivalTitle: {
         fontSize: 18,
@@ -618,6 +614,12 @@ const styles = StyleSheet.create({
     arrivalText: {
         fontSize: 14,
         color: COLORS.textSecondary,
+        marginBottom: 6,
+    },
+    arrivalSubtext: {
+        fontSize: 13,
+        color: COLORS.textSecondary,
+        textAlign: 'center',
         marginBottom: 16,
     },
     arrivalActions: {
@@ -627,12 +629,11 @@ const styles = StyleSheet.create({
     arrivalButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        borderWidth: 1,
-        borderColor: COLORS.border,
         paddingVertical: 10,
-        paddingHorizontal: 12,
-        borderRadius: 10,
-        backgroundColor: '#fff',
+        paddingHorizontal: 14,
+        borderRadius: RADII.button,
+        backgroundColor: '#F7F7FB',
+        ...SHADOWS.soft,
     },
     arrivalButtonText: {
         fontSize: 12,
@@ -641,7 +642,6 @@ const styles = StyleSheet.create({
     },
     primaryArrivalButton: {
         backgroundColor: COLORS.primary,
-        borderColor: COLORS.primary,
     },
     primaryArrivalButtonText: {
         color: '#fff',
