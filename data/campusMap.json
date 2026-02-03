@@ -1,0 +1,181 @@
+{
+    "nodes": {
+        "main_gate": {
+            "id": "main_gate",
+            "name": "Main Entrance Gate",
+            "qrCode": "CAMPUS_MAIN_GATE",
+            "coordinates": {
+                "lat": 0.0,
+                "lng": 0.0
+            },
+            "type": "entrance",
+            "description": "Main entrance to the campus"
+        },
+        "admin_block": {
+            "id": "admin_block",
+            "name": "Admin Block",
+            "qrCode": "CAMPUS_ADMIN_BLOCK",
+            "coordinates": {
+                "lat": 0.00027,
+                "lng": 0.0
+            },
+            "type": "building",
+            "description": "Administrative offices and reception"
+        },
+        "library": {
+            "id": "library",
+            "name": "Library",
+            "qrCode": "CAMPUS_LIBRARY",
+            "coordinates": {
+                "lat": 0.00027,
+                "lng": -0.00072
+            },
+            "type": "facility",
+            "description": "Campus library with study areas"
+        },
+        "playground": {
+            "id": "playground",
+            "name": "Playground",
+            "qrCode": "CAMPUS_PLAYGROUND",
+            "coordinates": {
+                "lat": 0.00027,
+                "lng": -0.00090
+            },
+            "type": "facility",
+            "description": "Sports ground and outdoor activities"
+        },
+        "computer_lab": {
+            "id": "computer_lab",
+            "name": "Computer Lab",
+            "qrCode": "CAMPUS_COMPUTER_LAB",
+            "coordinates": {
+                "lat": 0.00027,
+                "lng": 0.00036
+            },
+            "type": "building",
+            "description": "Computer science labs and workstations",
+            "hasEvent": true,
+            "eventInfo": "Programming workshop today at 2 PM"
+        },
+        "canteen": {
+            "id": "canteen",
+            "name": "Canteen",
+            "qrCode": "CAMPUS_CANTEEN",
+            "coordinates": {
+                "lat": 0.0,
+                "lng": 0.00036
+            },
+            "type": "facility",
+            "description": "Campus cafeteria and dining area"
+        },
+        "seminar_hall": {
+            "id": "seminar_hall",
+            "name": "Seminar Hall",
+            "qrCode": "CAMPUS_SEMINAR_HALL",
+            "coordinates": {
+                "lat": 0.00027,
+                "lng": 0.00099
+            },
+            "type": "building",
+            "description": "Large auditorium for events and seminars"
+        }
+    },
+    "edges": [
+        {
+            "from": "main_gate",
+            "to": "admin_block",
+            "distance": 30,
+            "direction": "north",
+            "accessible": true,
+            "instructions": "Walk straight north for 30 meters to Admin Block"
+        },
+        {
+            "from": "admin_block",
+            "to": "main_gate",
+            "distance": 30,
+            "direction": "south",
+            "accessible": true,
+            "instructions": "Walk straight south for 30 meters to Main Gate"
+        },
+        {
+            "from": "admin_block",
+            "to": "library",
+            "distance": 60,
+            "direction": "west",
+            "accessible": true,
+            "instructions": "Turn left and walk west for 60 meters to Library"
+        },
+        {
+            "from": "library",
+            "to": "admin_block",
+            "distance": 60,
+            "direction": "east",
+            "accessible": true,
+            "instructions": "Walk east for 60 meters to Admin Block"
+        },
+        {
+            "from": "library",
+            "to": "playground",
+            "distance": 20,
+            "direction": "west",
+            "accessible": true,
+            "instructions": "Continue west for 20 meters to Playground"
+        },
+        {
+            "from": "playground",
+            "to": "library",
+            "distance": 20,
+            "direction": "east",
+            "accessible": true,
+            "instructions": "Walk east for 20 meters to Library"
+        },
+        {
+            "from": "admin_block",
+            "to": "computer_lab",
+            "distance": 40,
+            "direction": "east",
+            "accessible": true,
+            "instructions": "Turn right and walk east for 40 meters to Computer Lab"
+        },
+        {
+            "from": "computer_lab",
+            "to": "admin_block",
+            "distance": 40,
+            "direction": "west",
+            "accessible": true,
+            "instructions": "Walk west for 40 meters to Admin Block"
+        },
+        {
+            "from": "computer_lab",
+            "to": "seminar_hall",
+            "distance": 70,
+            "direction": "east",
+            "accessible": true,
+            "instructions": "Continue east for 70 meters to Seminar Hall"
+        },
+        {
+            "from": "seminar_hall",
+            "to": "computer_lab",
+            "distance": 70,
+            "direction": "west",
+            "accessible": true,
+            "instructions": "Walk west for 70 meters to Computer Lab"
+        },
+        {
+            "from": "computer_lab",
+            "to": "canteen",
+            "distance": 30,
+            "direction": "south",
+            "accessible": true,
+            "instructions": "Turn right and walk south for 30 meters to Canteen"
+        },
+        {
+            "from": "canteen",
+            "to": "computer_lab",
+            "distance": 30,
+            "direction": "north",
+            "accessible": true,
+            "instructions": "Walk north for 30 meters to Computer Lab"
+        }
+    ]
+}
