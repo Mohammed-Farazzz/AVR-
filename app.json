@@ -1,59 +1,58 @@
 {
-    "expo": {
-        "name": "UniWay",
-        "slug": "uniway",
-        "version": "1.0.0",
-        "orientation": "portrait",
-        "entryPoint": "expo-router/entry",
-        "userInterfaceStyle": "light",
-        "icon": "./assets/uniway-icon.png",
-        "assetBundlePatterns": [
-            "**/*"
-        ],
-        "ios": {
-            "supportsTablet": true,
-            "splash": {
-                "image": "./uniway-logo.png",
-                "resizeMode": "contain",
-                "backgroundColor": "#000000"
-            },
-            "infoPlist": {
-                "NSCameraUsageDescription": "This app uses the camera to scan QR codes for location detection and AR navigation.",
-                "NSLocationWhenInUseUsageDescription": "This app uses your location to provide navigation guidance."
-            }
-        },
-        "android": {
-            "adaptiveIcon": {
-                "foregroundImage": "./uniway-logo.png",
-                "backgroundColor": "#000000"
-            },
-            "splash": {
-                "image": "./uniway-logo.png",
-                "resizeMode": "contain",
-                "backgroundColor": "#000000"
-            },
-            "permissions": [
-                "CAMERA",
-                "ACCESS_FINE_LOCATION",
-                "ACCESS_COARSE_LOCATION"
-            ]
-        },
-        "scheme": "uniway",
-        "splash": {
-            "image": "./uniway-logo.png",
-            "resizeMode": "contain",
-            "backgroundColor": "#000000"
-        },
-        "plugins": [
-            "expo-router",
-            [
-                "expo-splash-screen",
-                {
-                    "image": "./uniway-logo.png",
-                    "resizeMode": "contain",
-                    "backgroundColor": "#000000"
-                }
-            ]
-        ]
+  "expo": {
+    "name": "UniWay",
+    "slug": "uniway",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "entryPoint": "expo-router/entry",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/uniway-icon.png",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "splash": {
+        "image": "./assets/uniway-splash.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#000000"
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to scan QR codes for location detection and AR navigation.",
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to provide navigation guidance."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/uniway-logo.png",
+        "backgroundColor": "#000000"
+      },
+      "splash": {
+        "image": "./assets/uniway-splash.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#000000"
+      },
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
+      "package": "com.afnanonexpo.uniway"
+    },
+    "scheme": "uniway",
+    "splash": {
+      "image": "./assets/uniway-splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "3411d8b6-ac88-4fba-af14-442551be3c2f"
+      }
     }
+  }
 }

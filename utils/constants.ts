@@ -11,6 +11,10 @@ export const AVERAGE_WALKING_SPEED = 80;
 // Location update interval (milliseconds)
 export const LOCATION_UPDATE_INTERVAL = 2000;
 
+// AR movement detection
+export const AR_STEP_ACCEL_THRESHOLD = 0.18; // G units (approx)
+export const AR_STEP_MIN_DURATION_MS = 3500;
+
 // Voice guidance settings
 export const DEFAULT_VOICE_SETTINGS = {
     enabled: true,
