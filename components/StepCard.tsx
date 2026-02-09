@@ -55,7 +55,7 @@ export default function StepCard({ step, totalSteps, isActive }: StepCardProps) 
     );
 }
 
-function getDirectionArrow(direction: string): JSX.Element {
+function getDirectionArrow(direction: string): React.ReactElement {
     const arrowMap: Record<string, string> = {
         north: 'arrow-up',
         south: 'arrow-down',

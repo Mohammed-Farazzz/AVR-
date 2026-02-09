@@ -13,7 +13,21 @@ export const LOCATION_UPDATE_INTERVAL = 2000;
 
 // AR movement detection
 export const AR_STEP_ACCEL_THRESHOLD = 0.18; // G units (approx)
-export const AR_STEP_MIN_DURATION_MS = 3500;
+export const AR_STEP_MIN_DURATION_MS = 3000;
+export const AR_HEADING_DEVIATION_DEGREES = 20;
+export const AR_ONBOARDING_SEEN_KEY = '@ar_onboarding_seen';
+
+// AR perceptual guidance
+export const AR_WRONG_DIRECTION_DEGREES = 45;
+export const AR_WRONG_DIRECTION_MIN_MS = 3000;
+export const AR_ARROW_AHEAD_METERS_MIN = 1.4;
+export const AR_ARROW_AHEAD_METERS_MAX = 1.8;
+export const AR_ARROW_CORRIDOR_COUNT = 1; // render 1–3 (default single)
+export const AR_ARROW_CORRIDOR_SPACING = 0.5; // meters
+export const AR_ARROW_FLOOR_Y = -1.1; // virtual floor plane (camera-relative)
+export const AR_ARROW_FLOOR_OFFSET_Y = 0.07;
+export const AR_PARALLAX_METERS = 0.06; // ~5–10px perceptual shift
+export const AR_HEADING_PRECISION_DEGREES = 8;
 
 // Voice guidance settings
 export const DEFAULT_VOICE_SETTINGS = {

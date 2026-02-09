@@ -96,7 +96,7 @@ export function findRoute(
     let current: string | null = endId;
 
     while (current !== null) {
-        const prev = previous[current];
+        const prev: { nodeId: string; edge: CampusEdge } | null = previous[current];
         path.unshift({ nodeId: current, edge: prev?.edge || null });
         current = prev?.nodeId || null;
     }

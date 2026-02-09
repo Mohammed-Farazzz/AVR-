@@ -7,21 +7,46 @@ import {
     StyleSheet,
     TouchableOpacity,
     Pressable,
+    Animated,
+    Easing,
     AppState,
     AppStateStatus,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { BlurView } from 'expo-blur';
 import { GLView } from 'expo-gl';
 import { Renderer } from 'expo-three';
 import * as THREE from 'three';
 import { Magnetometer, Accelerometer } from 'expo-sensors';
+import * as Haptics from 'expo-haptics';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Route, CampusNode } from '../utils/types';
 import { getCampusMap } from '../services/storageService';
 import { getNavigationEngine } from '../services/navigationService';
 import { setVoiceSettings, getVoiceSettings, setAppActive, resetVoiceSettings, stopSpeaking, speakNavigationStep } from '../services/voiceService';
-import { COLORS, DIRECTION_DEGREES, RADII, SHADOWS, AR_STEP_ACCEL_THRESHOLD, AR_STEP_MIN_DURATION_MS } from '../utils/constants';
+import {
+    COLORS,
+    DIRECTION_DEGREES,
+    RADII,
+    SHADOWS,
+    AR_STEP_ACCEL_THRESHOLD,
+    AR_STEP_MIN_DURATION_MS,
+    AR_HEADING_DEVIATION_DEGREES,
+    AR_ONBOARDING_SEEN_KEY,
+    AR_WRONG_DIRECTION_DEGREES,
+    AR_WRONG_DIRECTION_MIN_MS,
+    AR_ARROW_AHEAD_METERS_MIN,
+    AR_ARROW_AHEAD_METERS_MAX,
+    AR_ARROW_CORRIDOR_COUNT,
+    AR_ARROW_CORRIDOR_SPACING,
+    AR_ARROW_FLOOR_Y,
+    AR_ARROW_FLOOR_OFFSET_Y,
+    AR_PARALLAX_METERS,
+    AR_HEADING_PRECISION_DEGREES,
+} from '../utils/constants';
 
 export default function ARGuideScreen() {
     const router = useRouter();
@@ -40,21 +65,29 @@ export default function ARGuideScreen() {
     const [remainingDistance, setRemainingDistance] = useState(0);
     const [showArrival, setShowArrival] = useState(false);
     const [showStepPrompt, setShowStepPrompt] = useState(false);
+    const [directionHint, setDirectionHint] = useState<string | null>(null);
+    const [showWrongDirection, setShowWrongDirection] = useState(false);
+    const [wrongDirectionHint, setWrongDirectionHint] = useState<string>('');
+    const [showOnboarding, setShowOnboarding] = useState(false);
+    const [fallbackRotation, setFallbackRotation] = useState(0);
 
     const navigationEngine = useRef(getNavigationEngine());
     const glContextRef = useRef<any>(null);
-    const rendererRef = useRef<Renderer | null>(null);
+    const rendererRef = useRef<any>(null);
     const sceneRef = useRef<THREE.Scene | null>(null);
     const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
     const arrowRef = useRef<THREE.Group | null>(null);
     const animationRef = useRef<number | null>(null);
     const headingRef = useRef<number>(0);
+    const headingSmoothRef = useRef<number | null>(null);
+    const lastHeadingTsRef = useRef<number | null>(null);
     const anchorHeadingRef = useRef<number | null>(null);
     const targetBearingRef = useRef<number>(0);
     const arrowRotationRef = useRef<number>(0);
     const magnetometerSub = useRef<any>(null);
     const accelerometerSub = useRef<any>(null);
     const gravityRef = useRef({ x: 0, y: 0, z: 0 });
+    const tiltRef = useRef({ pitch: 0, roll: 0 });
     const movementMsRef = useRef(0);
     const lastAccelTsRef = useRef<number | null>(null);
     const routeRef = useRef<Route | null>(null);
@@ -62,6 +95,15 @@ export default function ARGuideScreen() {
     const showArrivalRef = useRef(false);
     const showStepPromptRef = useRef(false);
     const voiceEnabledRef = useRef(true);
+    const showWrongDirectionRef = useRef(false);
+    const lastHintRef = useRef<string | null>(null);
+    const lastHapticTsRef = useRef<number>(0);
+    const wrongDirectionMsRef = useRef(0);
+    const wrongDirectionHintRef = useRef<string | null>(null);
+    const stepOverlayOpacity = useRef(new Animated.Value(0)).current;
+    const stepOverlayTranslate = useRef(new Animated.Value(8)).current;
+    const onboardingOpacity = useRef(new Animated.Value(0)).current;
+    const lastRotationUpdateRef = useRef(0);
 
     useEffect(() => {
         initializeNavigation();
@@ -92,6 +134,36 @@ export default function ARGuideScreen() {
     }, []);
 
     useEffect(() => {
+        const loadOnboarding = async () => {
+            try {
+                const seen = await AsyncStorage.getItem(AR_ONBOARDING_SEEN_KEY);
+                if (!seen) {
+                    setShowOnboarding(true);
+                    Animated.timing(onboardingOpacity, {
+                        toValue: 1,
+                        duration: 300,
+                        easing: Easing.out(Easing.cubic),
+                        useNativeDriver: true,
+                    }).start(() => {
+                        setTimeout(() => {
+                            Animated.timing(onboardingOpacity, {
+                                toValue: 0,
+                                duration: 250,
+                                easing: Easing.in(Easing.cubic),
+                                useNativeDriver: true,
+                            }).start(() => setShowOnboarding(false));
+                        }, 3000);
+                    });
+                    await AsyncStorage.setItem(AR_ONBOARDING_SEEN_KEY, '1');
+                }
+            } catch {
+                // no-op
+            }
+        };
+        loadOnboarding();
+    }, [onboardingOpacity]);
+
+    useEffect(() => {
         if (route && currentStepIndex < route.steps.length) {
             const currentStep = route.steps[currentStepIndex];
             updateRemainingDistance();
@@ -118,6 +190,44 @@ export default function ARGuideScreen() {
     useEffect(() => {
         voiceEnabledRef.current = voiceEnabled;
     }, [voiceEnabled]);
+
+    useEffect(() => {
+        showWrongDirectionRef.current = showWrongDirection;
+    }, [showWrongDirection]);
+
+    useEffect(() => {
+        if (showStepPrompt) {
+            Animated.parallel([
+                Animated.timing(stepOverlayOpacity, {
+                    toValue: 1,
+                    duration: 260,
+                    easing: Easing.out(Easing.cubic),
+                    useNativeDriver: true,
+                }),
+                Animated.timing(stepOverlayTranslate, {
+                    toValue: 0,
+                    duration: 260,
+                    easing: Easing.out(Easing.cubic),
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        } else {
+            Animated.parallel([
+                Animated.timing(stepOverlayOpacity, {
+                    toValue: 0,
+                    duration: 200,
+                    easing: Easing.in(Easing.cubic),
+                    useNativeDriver: true,
+                }),
+                Animated.timing(stepOverlayTranslate, {
+                    toValue: 8,
+                    duration: 200,
+                    easing: Easing.in(Easing.cubic),
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        }
+    }, [showStepPrompt, stepOverlayOpacity, stepOverlayTranslate]);
 
     const initializeNavigation = async () => {
         const parsedRoute: Route = JSON.parse(routeData);
@@ -152,29 +262,109 @@ export default function ARGuideScreen() {
         return normalized < 0 ? normalized + 360 : normalized;
     };
 
+    const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+
+    const updateDirectionalHint = (delta: number) => {
+        const deviation = Math.min(delta, 360 - delta);
+        const isAligned = deviation <= AR_HEADING_PRECISION_DEGREES;
+        const shouldShow = deviation > AR_HEADING_DEVIATION_DEGREES || isAligned;
+        const hint = shouldShow ? (isAligned ? 'Go straight' : (delta > 180 ? 'Turn slightly left' : 'Turn slightly right')) : null;
+
+        if (hint !== lastHintRef.current) {
+            lastHintRef.current = hint;
+            setDirectionHint(hint);
+            if (hint) {
+                const now = Date.now();
+                if (now - lastHapticTsRef.current > 1200) {
+                    lastHapticTsRef.current = now;
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                }
+            }
+        }
+    };
+
+    const updateWrongDirection = (delta: number, dtMs: number) => {
+        const deviation = Math.min(delta, 360 - delta);
+        if (deviation > AR_WRONG_DIRECTION_DEGREES) {
+            wrongDirectionMsRef.current += dtMs;
+            const hint = delta > 180 ? 'Turn slightly left' : 'Turn slightly right';
+            wrongDirectionHintRef.current = hint;
+            if (hint !== wrongDirectionHint) {
+                setWrongDirectionHint(hint);
+            }
+            if (wrongDirectionMsRef.current >= AR_WRONG_DIRECTION_MIN_MS) {
+                if (!showWrongDirectionRef.current) {
+                    setShowWrongDirection(true);
+                    showWrongDirectionRef.current = true;
+                    const now = Date.now();
+                    if (now - lastHapticTsRef.current > 1200) {
+                        lastHapticTsRef.current = now;
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+                    }
+                }
+            }
+        } else {
+            wrongDirectionMsRef.current = 0;
+            wrongDirectionHintRef.current = null;
+            if (wrongDirectionHint) {
+                setWrongDirectionHint('');
+            }
+            if (showWrongDirectionRef.current) {
+                setShowWrongDirection(false);
+                showWrongDirectionRef.current = false;
+            }
+        }
+    };
+
     const updateTargetBearing = (direction: string) => {
         const targetDegrees = DIRECTION_DEGREES[direction as keyof typeof DIRECTION_DEGREES] || 0;
         targetBearingRef.current = targetDegrees;
     };
 
     const startSensors = () => {
-        Magnetometer.setUpdateInterval(100);
+        Magnetometer.setUpdateInterval(80);
         magnetometerSub.current = Magnetometer.addListener(({ x, y }) => {
             const heading = normalizeDegrees((Math.atan2(y, x) * 180) / Math.PI);
-            headingRef.current = heading;
+            const now = Date.now();
+            const lastTs = lastHeadingTsRef.current ?? now;
+            const dt = now - lastTs;
+            lastHeadingTsRef.current = now;
+
+            // Smooth heading to reduce magnetometer jitter with adaptive responsiveness.
+            if (headingSmoothRef.current === null) {
+                headingSmoothRef.current = heading;
+            } else {
+                const current = headingSmoothRef.current;
+                // Take shortest path around the circle.
+                let diff = heading - current;
+                if (diff > 180) diff -= 360;
+                if (diff < -180) diff += 360;
+                const adaptive = Math.min(0.45, 0.2 + Math.abs(diff) / 180);
+                const smoothed = normalizeDegrees(current + diff * adaptive);
+                headingSmoothRef.current = smoothed;
+            }
+
+            headingRef.current = headingSmoothRef.current ?? heading;
             if (anchorHeadingRef.current === null) {
-                anchorHeadingRef.current = heading;
+                anchorHeadingRef.current = headingRef.current;
+            }
+            const anchor = anchorHeadingRef.current ?? headingRef.current;
+            const currentHeading = normalizeDegrees(headingRef.current - anchor);
+            const target = targetBearingRef.current;
+            const delta = normalizeDegrees(target - currentHeading);
+            updateDirectionalHint(delta);
+            updateWrongDirection(delta, dt);
+
+            if (Constants.appOwnership === 'expo') {
+                if (now - lastRotationUpdateRef.current > 80) {
+                    lastRotationUpdateRef.current = now;
+                    setFallbackRotation(delta);
+                }
             }
         });
 
         Accelerometer.setUpdateInterval(200);
         accelerometerSub.current = Accelerometer.addListener((data) => {
-            const activeRoute = routeRef.current;
-            if (!activeRoute) return;
-            if (showArrivalRef.current) return;
-            if (currentStepIndexRef.current >= activeRoute.steps.length - 1) return;
-            if (showStepPromptRef.current) return;
-
             const now = Date.now();
             const last = lastAccelTsRef.current ?? now;
             const dt = now - last;
@@ -185,6 +375,17 @@ export default function ARGuideScreen() {
             gravity.x = alpha * gravity.x + (1 - alpha) * data.x;
             gravity.y = alpha * gravity.y + (1 - alpha) * data.y;
             gravity.z = alpha * gravity.z + (1 - alpha) * data.z;
+
+            // Approx pitch/roll from gravity vector for subtle parallax.
+            const roll = Math.atan2(gravity.y, gravity.z);
+            const pitch = Math.atan2(-gravity.x, Math.sqrt(gravity.y * gravity.y + gravity.z * gravity.z));
+            tiltRef.current = { pitch, roll };
+
+            const activeRoute = routeRef.current;
+            if (!activeRoute) return;
+            if (showArrivalRef.current) return;
+            if (currentStepIndexRef.current >= activeRoute.steps.length - 1) return;
+            if (showStepPromptRef.current) return;
 
             const lx = data.x - gravity.x;
             const ly = data.y - gravity.y;
@@ -203,26 +404,41 @@ export default function ARGuideScreen() {
         });
     };
 
-    const createArrowMesh = () => {
+    const createArrowInstance = (opacity: number) => {
         const group = new THREE.Group();
-        const material = new THREE.MeshStandardMaterial({
+
+        const arrowMaterial = new THREE.MeshStandardMaterial({
             color: 0xffffff,
-            roughness: 0.2,
-            metalness: 0.1,
+            emissive: new THREE.Color(0x111111),
+            emissiveIntensity: 0.35,
+            roughness: 0.25,
+            metalness: 0.05,
+            transparent: true,
+            opacity,
         });
 
-        const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.5, 18), material);
-        shaft.position.y = 0.2;
-        const head = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.22, 24), material);
-        head.position.y = 0.55;
+        const arrowShape = new THREE.Shape();
+        arrowShape.moveTo(-0.12, -0.05);
+        arrowShape.lineTo(0.04, -0.05);
+        arrowShape.lineTo(0.04, -0.14);
+        arrowShape.lineTo(0.18, 0);
+        arrowShape.lineTo(0.04, 0.14);
+        arrowShape.lineTo(0.04, 0.05);
+        arrowShape.lineTo(-0.12, 0.05);
+        arrowShape.lineTo(-0.12, -0.05);
 
-        group.add(shaft);
-        group.add(head);
+        const arrowGeo = new THREE.ShapeGeometry(arrowShape);
+        const arrowMesh = new THREE.Mesh(arrowGeo, arrowMaterial);
+        arrowMesh.rotation.x = -Math.PI / 2;
+        arrowMesh.rotation.z = Math.PI / 2;
+        arrowMesh.position.y = 0.02;
+        group.add(arrowMesh);
 
+        // Ground shadow (mandatory depth cue)
         const shadowMat = new THREE.MeshBasicMaterial({
             color: 0x000000,
             transparent: true,
-            opacity: 0.22,
+            opacity: 0.2 * opacity,
             depthWrite: false,
         });
         const shadow = new THREE.Mesh(new THREE.CircleGeometry(0.28, 24), shadowMat);
@@ -230,15 +446,68 @@ export default function ARGuideScreen() {
         shadow.position.y = -0.01;
         group.add(shadow);
 
-        // Lay arrow on floor, pointing forward (-Z)
-        group.rotation.x = -Math.PI / 2;
-        group.position.set(0, -0.6, -1.5);
+        // Contact ring + soft fade ring
+        const ringMat = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.2 * opacity,
+            depthWrite: false,
+        });
+        const ring = new THREE.Mesh(new THREE.RingGeometry(0.16, 0.22, 32), ringMat);
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.y = -0.005;
+        group.add(ring);
+
+        const ringFadeMat = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.08 * opacity,
+            depthWrite: false,
+        });
+        const ringFade = new THREE.Mesh(new THREE.RingGeometry(0.22, 0.3, 32), ringFadeMat);
+        ringFade.rotation.x = -Math.PI / 2;
+        ringFade.position.y = -0.006;
+        group.add(ringFade);
+
         return group;
+    };
+
+    const createArrowCorridor = () => {
+        const corridor = new THREE.Group();
+        const count = clamp(AR_ARROW_CORRIDOR_COUNT, 1, 5);
+        for (let i = 0; i < count; i++) {
+            const t = count === 1 ? 0 : i / (count - 1);
+            const opacity = 1 - t * 0.75;
+            const arrow = createArrowInstance(opacity);
+            arrow.position.z = -i * AR_ARROW_CORRIDOR_SPACING;
+            corridor.add(arrow);
+        }
+        return corridor;
+    };
+
+    const getArrowBasePosition = () => {
+        // Raycast from camera center down to a virtual floor plane.
+        const rayOrigin = new THREE.Vector3(0, 0, 0);
+        const rayDir = new THREE.Vector3(0, -1, -2).normalize();
+        const floorY = AR_ARROW_FLOOR_Y;
+
+        if (Math.abs(rayDir.y) < 0.15) {
+            return new THREE.Vector3(0, floorY + AR_ARROW_FLOOR_OFFSET_Y, -AR_ARROW_AHEAD_METERS_MIN);
+        }
+
+        const t = (floorY - rayOrigin.y) / rayDir.y;
+        if (!Number.isFinite(t) || t <= 0) {
+            return new THREE.Vector3(0, floorY + AR_ARROW_FLOOR_OFFSET_Y, -AR_ARROW_AHEAD_METERS_MIN);
+        }
+
+        const hit = rayOrigin.clone().add(rayDir.clone().multiplyScalar(t));
+        const z = clamp(hit.z, -AR_ARROW_AHEAD_METERS_MAX, -AR_ARROW_AHEAD_METERS_MIN);
+        return new THREE.Vector3(0, floorY + AR_ARROW_FLOOR_OFFSET_Y, z);
     };
 
     const onContextCreate = (gl: any) => {
         glContextRef.current = gl;
-        const renderer = new Renderer({ gl });
+        const renderer: any = new Renderer({ gl });
         renderer.setSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
         renderer.setClearColor(0x000000, 0);
         rendererRef.current = renderer;
@@ -255,15 +524,18 @@ export default function ARGuideScreen() {
         camera.position.set(0, 0, 0);
         cameraRef.current = camera;
 
-        const ambient = new THREE.AmbientLight(0xffffff, 0.9);
+        const ambient = new THREE.AmbientLight(0xffffff, 1.1);
         scene.add(ambient);
-        const dir = new THREE.DirectionalLight(0xffffff, 0.6);
-        dir.position.set(0, 2, 2);
+        const dir = new THREE.DirectionalLight(0xffffff, 0.9);
+        dir.position.set(0.2, 2.2, 1.6);
         scene.add(dir);
+        const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 0.4);
+        hemi.position.set(0, 2, 0);
+        scene.add(hemi);
 
-        const arrow = createArrowMesh();
-        arrowRef.current = arrow;
-        scene.add(arrow);
+        const arrowCorridor = createArrowCorridor();
+        arrowRef.current = arrowCorridor;
+        scene.add(arrowCorridor);
 
         startSensors();
 
@@ -279,11 +551,27 @@ export default function ARGuideScreen() {
                 arrowRotationRef.current = THREE.MathUtils.lerp(
                     arrowRotationRef.current,
                     targetRad,
-                    0.08
+                    0.1
                 );
-                const bob = Math.sin(Date.now() * 0.003) * 0.04;
+                const bob = Math.sin(Date.now() * 0.003) * 0.02;
+                const arrivalPulse = showArrivalRef.current ? (1 + Math.sin(Date.now() * 0.004) * 0.035) : 1;
+
+                const basePos = getArrowBasePosition();
+                const { pitch, roll } = tiltRef.current;
+                const parallaxX = clamp(-roll, -1, 1) * AR_PARALLAX_METERS;
+                const parallaxY = clamp(pitch, -1, 1) * AR_PARALLAX_METERS * 0.6;
+
                 arrowRef.current.rotation.y = arrowRotationRef.current;
-                arrowRef.current.position.set(0, -0.6 + bob, -1.5);
+                arrowRef.current.position.set(basePos.x + parallaxX, basePos.y + bob + parallaxY, basePos.z);
+
+                // Fake depth scaling along corridor (perspective illusion)
+                const count = arrowRef.current.children.length;
+                for (let i = 0; i < count; i++) {
+                    const child = arrowRef.current.children[i] as THREE.Object3D;
+                    const distanceFactor = count <= 1 ? 0 : (i / (count - 1));
+                    const scale = clamp(1 - distanceFactor * 0.15, 0.7, 1) * arrivalPulse;
+                    child.scale.set(scale, scale, scale);
+                }
             }
 
             renderer.render(scene, camera);
@@ -406,11 +694,25 @@ export default function ARGuideScreen() {
         <View style={styles.container}>
             {/* Camera View */}
             <CameraView style={styles.camera} facing="back" />
-            <GLView style={styles.glView} onContextCreate={onContextCreate} pointerEvents="none" />
+            {Constants.appOwnership === 'expo' ? (
+                <View style={styles.fallbackArrowContainer} pointerEvents="none">
+                    <View style={styles.fallbackArrowRing} />
+                    <Ionicons
+                        name="arrow-up"
+                        size={72}
+                        color="#fff"
+                        style={{
+                            transform: [{ rotate: `${fallbackRotation}deg` }],
+                        }}
+                    />
+                </View>
+            ) : (
+                <GLView style={styles.glView} onContextCreate={onContextCreate} pointerEvents="none" />
+            )}
 
             {/* Top Overlay - Destination Info */}
             <View style={styles.topOverlay}>
-                <View style={styles.glassCard}>
+                <BlurView intensity={26} tint="dark" style={styles.glassCard}>
                     <Text style={styles.destinationText}>{destination.name}</Text>
                     <View style={styles.progressBar}>
                         <View style={[styles.progressFill, { width: `${progress}%` }]} />
@@ -418,16 +720,31 @@ export default function ARGuideScreen() {
                     <Text style={styles.stepsText}>
                         {currentStepIndex + 1}/{route.steps.length}
                     </Text>
-                </View>
+                </BlurView>
             </View>
 
             {/* Instruction Card */}
             <View style={styles.instructionContainer}>
-                <View style={styles.instructionCard}>
+                <BlurView intensity={26} tint="dark" style={styles.instructionCard}>
                     <Text style={styles.instructionText}>{currentStep.instruction}</Text>
                     <Text style={styles.distanceText}>{currentStep.distance}m</Text>
-                </View>
+                </BlurView>
             </View>
+
+            {showWrongDirection ? (
+                <View style={styles.wrongDirectionOverlay} pointerEvents="none">
+                    <BlurView intensity={26} tint="dark" style={styles.wrongDirectionBlur}>
+                        <Text style={styles.wrongDirectionTitle}>You may be off route</Text>
+                        <Text style={styles.wrongDirectionText}>{wrongDirectionHint || 'Turn back'}</Text>
+                    </BlurView>
+                </View>
+            ) : (
+                directionHint && (
+                    <View style={styles.directionHint} pointerEvents="none">
+                        <Text style={styles.directionHintText}>{directionHint}</Text>
+                    </View>
+                )
+            )}
 
             {/* Bottom Controls */}
             <View style={styles.bottomOverlay}>
@@ -472,11 +789,8 @@ export default function ARGuideScreen() {
                 <View style={styles.arrivalOverlay}>
                     <View style={styles.arrivalCard}>
                         <Ionicons name="checkmark-circle" size={36} color={COLORS.success} style={{ marginBottom: 12 }} />
-                        <Text style={styles.arrivalTitle}>Arrived</Text>
+                        <Text style={styles.arrivalTitle}>You've arrived</Text>
                         <Text style={styles.arrivalText}>{destination.name}</Text>
-                        <Text style={styles.arrivalSubtext}>
-                            You are all set. We have arrived at your destination.
-                        </Text>
                         <View style={styles.arrivalActions}>
                             <TouchableOpacity style={styles.arrivalButton} onPress={handleRescan}>
                                 <Ionicons name="scan" size={16} color={COLORS.text} style={{ marginRight: 6 }} />
@@ -493,20 +807,36 @@ export default function ARGuideScreen() {
 
             {showStepPrompt && !showArrival && (
                 <Pressable style={styles.stepPromptOverlay} onPress={handleConfirmStep}>
-                    <View style={styles.stepPromptCard}>
-                        <Text style={styles.stepPromptTitle}>Reached junction?</Text>
-                        <Text style={styles.stepPromptText}>Confirm to continue to the next instruction.</Text>
-                        <View style={styles.stepPromptActions}>
-                            <TouchableOpacity style={styles.stepPromptButton} onPress={handleNotYet}>
-                                <Text style={styles.stepPromptButtonText}>Not yet</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={[styles.stepPromptButton, styles.stepPromptPrimary]} onPress={handleConfirmStep}>
-                                <Text style={[styles.stepPromptButtonText, styles.stepPromptPrimaryText]}>Continue</Text>
-                            </TouchableOpacity>
-                        </View>
-                        <Text style={styles.stepPromptHint}>Tap anywhere to confirm</Text>
-                    </View>
+                    <Animated.View
+                        style={[
+                            styles.stepPromptCard,
+                            {
+                                opacity: stepOverlayOpacity,
+                                transform: [{ translateY: stepOverlayTranslate }],
+                            },
+                        ]}
+                    >
+                        <BlurView intensity={40} tint="dark" style={styles.stepPromptBlur}>
+                            <Text style={styles.stepPromptTitle}>Are you at the turn?</Text>
+                            <Text style={styles.stepPromptText}>Confirm to continue to the next instruction.</Text>
+                            <View style={styles.stepPromptActions}>
+                                <TouchableOpacity style={styles.stepPromptButton} onPress={handleNotYet}>
+                                    <Text style={styles.stepPromptButtonText}>Not yet</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.stepPromptButton, styles.stepPromptPrimary]} onPress={handleConfirmStep}>
+                                    <Text style={[styles.stepPromptButtonText, styles.stepPromptPrimaryText]}>Confirm turn</Text>
+                                </TouchableOpacity>
+                            </View>
+                            <Text style={styles.stepPromptHint}>Tap anywhere to confirm</Text>
+                        </BlurView>
+                    </Animated.View>
                 </Pressable>
+            )}
+
+            {showOnboarding && (
+                <Animated.View style={[styles.onboardingHint, { opacity: onboardingOpacity }]}>
+                    <Text style={styles.onboardingText}>Walk forward and follow the arrow.</Text>
+                </Animated.View>
             )}
         </View>
     );
@@ -522,6 +852,26 @@ const styles = StyleSheet.create({
     },
     glView: {
         ...StyleSheet.absoluteFillObject,
+    },
+    fallbackArrowContainer: {
+        position: 'absolute',
+        top: '38%',
+        alignSelf: 'center',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 160,
+        height: 160,
+        borderRadius: 80,
+        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    },
+    fallbackArrowRing: {
+        position: 'absolute',
+        width: 110,
+        height: 110,
+        borderRadius: 55,
+        borderWidth: 2,
+        borderColor: 'rgba(255, 255, 255, 0.22)',
+        backgroundColor: 'rgba(0, 0, 0, 0.2)',
     },
     loadingContainer: {
         flex: 1,
@@ -592,18 +942,18 @@ const styles = StyleSheet.create({
         right: 20,
     },
     glassCard: {
-        backgroundColor: 'rgba(255, 255, 255, 0.12)',
         borderRadius: RADII.card,
-        paddingVertical: 14,
-        paddingHorizontal: 16,
+        paddingVertical: 12,
+        paddingHorizontal: 14,
         overflow: 'hidden',
+        backgroundColor: 'rgba(255, 255, 255, 0.06)',
     },
     destinationText: {
-        fontSize: 18,
-        fontWeight: '600',
+        fontSize: 16,
+        fontWeight: '700',
         color: '#fff',
         textAlign: 'center',
-        marginBottom: 10,
+        marginBottom: 8,
         textShadowColor: 'rgba(0, 0, 0, 0.3)',
         textShadowOffset: { width: 0, height: 1 },
         textShadowRadius: 4,
@@ -630,34 +980,78 @@ const styles = StyleSheet.create({
     },
     instructionContainer: {
         position: 'absolute',
-        bottom: 180,
+        bottom: 230,
         left: 20,
         right: 20,
         alignItems: 'center',
     },
     instructionCard: {
-        backgroundColor: 'rgba(10, 15, 25, 0.5)',
         borderRadius: RADII.card,
         paddingVertical: 14,
-        paddingHorizontal: 20,
+        paddingHorizontal: 18,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         maxWidth: 400,
         width: '100%',
         overflow: 'hidden',
+        backgroundColor: 'rgba(255, 255, 255, 0.06)',
     },
     instructionText: {
         fontSize: 16,
-        fontWeight: '500',
-        color: '#fff',
+        fontWeight: '600',
+        color: 'rgba(255, 255, 255, 0.92)',
         flex: 1,
         marginRight: 12,
     },
     distanceText: {
-        fontSize: 18,
-        fontWeight: '600',
+        fontSize: 17,
+        fontWeight: '700',
         color: '#fff',
+    },
+    directionHint: {
+        position: 'absolute',
+        top: '46%',
+        alignSelf: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.45)',
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 16,
+    },
+    directionHintText: {
+        fontSize: 12,
+        color: '#fff',
+        fontWeight: '600',
+        letterSpacing: 0.2,
+    },
+    wrongDirectionOverlay: {
+        position: 'absolute',
+        top: '42%',
+        alignSelf: 'center',
+        width: '88%',
+        maxWidth: 360,
+        borderRadius: RADII.card,
+        overflow: 'hidden',
+        ...SHADOWS.soft,
+    },
+    wrongDirectionBlur: {
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    },
+    wrongDirectionTitle: {
+        fontSize: 12,
+        color: 'rgba(255, 255, 255, 0.7)',
+        fontWeight: '600',
+        marginBottom: 6,
+        letterSpacing: 0.2,
+    },
+    wrongDirectionText: {
+        fontSize: 15,
+        color: '#fff',
+        fontWeight: '700',
+        letterSpacing: 0.2,
     },
     bottomOverlay: {
         position: 'absolute',
@@ -710,24 +1104,28 @@ const styles = StyleSheet.create({
         padding: 24,
     },
     stepPromptCard: {
-        backgroundColor: COLORS.card,
-        borderRadius: RADII.card,
-        paddingVertical: 22,
-        paddingHorizontal: 20,
         width: '100%',
         maxWidth: 360,
-        alignItems: 'center',
+        borderRadius: RADII.card,
+        overflow: 'hidden',
         ...SHADOWS.soft,
+    },
+    stepPromptBlur: {
+        paddingVertical: 22,
+        paddingHorizontal: 22,
+        alignItems: 'center',
+        backgroundColor: 'rgba(20, 20, 20, 0.35)',
     },
     stepPromptTitle: {
         fontSize: 17,
         fontWeight: '700',
-        color: COLORS.text,
+        color: '#fff',
         marginBottom: 6,
+        textAlign: 'center',
     },
     stepPromptText: {
         fontSize: 13,
-        color: COLORS.textSecondary,
+        color: 'rgba(255, 255, 255, 0.75)',
         textAlign: 'center',
         marginBottom: 14,
     },
@@ -738,25 +1136,39 @@ const styles = StyleSheet.create({
     },
     stepPromptButton: {
         paddingVertical: 10,
-        paddingHorizontal: 14,
+        paddingHorizontal: 18,
         borderRadius: RADII.button,
-        backgroundColor: '#F7F7FB',
-        ...SHADOWS.soft,
+        backgroundColor: 'rgba(255, 255, 255, 0.16)',
     },
     stepPromptButtonText: {
         fontSize: 12,
         fontWeight: '600',
-        color: COLORS.text,
+        color: '#fff',
     },
     stepPromptPrimary: {
-        backgroundColor: COLORS.primary,
+        backgroundColor: 'rgba(0, 122, 255, 0.9)',
     },
     stepPromptPrimaryText: {
         color: '#fff',
     },
     stepPromptHint: {
         fontSize: 11,
-        color: COLORS.textSecondary,
+        color: 'rgba(255, 255, 255, 0.7)',
+    },
+    onboardingHint: {
+        position: 'absolute',
+        bottom: 120,
+        alignSelf: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.45)',
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 16,
+    },
+    onboardingText: {
+        fontSize: 12,
+        color: '#fff',
+        fontWeight: '500',
+        letterSpacing: 0.2,
     },
     arrivalOverlay: {
         ...StyleSheet.absoluteFillObject,
@@ -785,12 +1197,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: COLORS.textSecondary,
         marginBottom: 6,
-    },
-    arrivalSubtext: {
-        fontSize: 13,
-        color: COLORS.textSecondary,
-        textAlign: 'center',
-        marginBottom: 16,
     },
     arrivalActions: {
         flexDirection: 'row',
