@@ -27,7 +27,8 @@ export const AR_ARROW_CORRIDOR_SPACING = 0.5; // meters
 export const AR_ARROW_FLOOR_Y = -1.1; // virtual floor plane (camera-relative)
 export const AR_ARROW_FLOOR_OFFSET_Y = 0.07;
 export const AR_PARALLAX_METERS = 0.06; // ~5–10px perceptual shift
-export const AR_HEADING_PRECISION_DEGREES = 8;
+export const AR_HEADING_PRECISION_DEGREES = 6;
+export const AR_HEADING_DEADZONE_DEGREES = 1.5;
 
 // Voice guidance settings
 export const DEFAULT_VOICE_SETTINGS = {

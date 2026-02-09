@@ -46,6 +46,7 @@ import {
     AR_ARROW_FLOOR_OFFSET_Y,
     AR_PARALLAX_METERS,
     AR_HEADING_PRECISION_DEGREES,
+    AR_HEADING_DEADZONE_DEGREES,
 } from '../utils/constants';
 
 export default function ARGuideScreen() {
@@ -322,7 +323,7 @@ export default function ARGuideScreen() {
     };
 
     const startSensors = () => {
-        Magnetometer.setUpdateInterval(80);
+        Magnetometer.setUpdateInterval(120);
         magnetometerSub.current = Magnetometer.addListener(({ x, y }) => {
             const heading = normalizeDegrees((Math.atan2(y, x) * 180) / Math.PI);
             const now = Date.now();
@@ -330,7 +331,7 @@ export default function ARGuideScreen() {
             const dt = now - lastTs;
             lastHeadingTsRef.current = now;
 
-            // Smooth heading to reduce magnetometer jitter with adaptive responsiveness.
+            // Smooth heading to reduce magnetometer jitter with adaptive responsiveness + deadzone.
             if (headingSmoothRef.current === null) {
                 headingSmoothRef.current = heading;
             } else {
@@ -339,9 +340,14 @@ export default function ARGuideScreen() {
                 let diff = heading - current;
                 if (diff > 180) diff -= 360;
                 if (diff < -180) diff += 360;
-                const adaptive = Math.min(0.45, 0.2 + Math.abs(diff) / 180);
-                const smoothed = normalizeDegrees(current + diff * adaptive);
-                headingSmoothRef.current = smoothed;
+                const absDiff = Math.abs(diff);
+                if (absDiff < AR_HEADING_DEADZONE_DEGREES) {
+                    headingSmoothRef.current = current;
+                } else {
+                    const adaptive = Math.min(0.3, 0.12 + absDiff / 220);
+                    const smoothed = normalizeDegrees(current + diff * adaptive);
+                    headingSmoothRef.current = smoothed;
+                }
             }
 
             headingRef.current = headingSmoothRef.current ?? heading;
@@ -733,7 +739,7 @@ export default function ARGuideScreen() {
 
             {showWrongDirection ? (
                 <View style={styles.wrongDirectionOverlay} pointerEvents="none">
-                    <BlurView intensity={26} tint="dark" style={styles.wrongDirectionBlur}>
+                    <BlurView intensity={40} tint="dark" style={styles.wrongDirectionBlur}>
                         <Text style={styles.wrongDirectionTitle}>You may be off route</Text>
                         <Text style={styles.wrongDirectionText}>{wrongDirectionHint || 'Turn back'}</Text>
                     </BlurView>
@@ -816,7 +822,7 @@ export default function ARGuideScreen() {
                             },
                         ]}
                     >
-                        <BlurView intensity={40} tint="dark" style={styles.stepPromptBlur}>
+                        <BlurView intensity={48} tint="dark" style={styles.stepPromptBlur}>
                             <Text style={styles.stepPromptTitle}>Are you at the turn?</Text>
                             <Text style={styles.stepPromptText}>Confirm to continue to the next instruction.</Text>
                             <View style={styles.stepPromptActions}>
@@ -1028,17 +1034,17 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: '42%',
         alignSelf: 'center',
-        width: '88%',
+        width: '84%',
         maxWidth: 360,
         borderRadius: RADII.card,
         overflow: 'hidden',
         ...SHADOWS.soft,
     },
     wrongDirectionBlur: {
-        paddingVertical: 14,
+        paddingVertical: 12,
         paddingHorizontal: 16,
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.35)',
+        backgroundColor: 'rgba(12, 12, 12, 0.28)',
     },
     wrongDirectionTitle: {
         fontSize: 12,
@@ -1048,7 +1054,7 @@ const styles = StyleSheet.create({
         letterSpacing: 0.2,
     },
     wrongDirectionText: {
-        fontSize: 15,
+        fontSize: 14,
         color: '#fff',
         fontWeight: '700',
         letterSpacing: 0.2,
@@ -1112,12 +1118,12 @@ const styles = StyleSheet.create({
     },
     stepPromptBlur: {
         paddingVertical: 22,
-        paddingHorizontal: 22,
+        paddingHorizontal: 20,
         alignItems: 'center',
-        backgroundColor: 'rgba(20, 20, 20, 0.35)',
+        backgroundColor: 'rgba(12, 12, 12, 0.32)',
     },
     stepPromptTitle: {
-        fontSize: 17,
+        fontSize: 16,
         fontWeight: '700',
         color: '#fff',
         marginBottom: 6,
@@ -1136,9 +1142,9 @@ const styles = StyleSheet.create({
     },
     stepPromptButton: {
         paddingVertical: 10,
-        paddingHorizontal: 18,
+        paddingHorizontal: 16,
         borderRadius: RADII.button,
-        backgroundColor: 'rgba(255, 255, 255, 0.16)',
+        backgroundColor: 'rgba(255, 255, 255, 0.14)',
     },
     stepPromptButtonText: {
         fontSize: 12,
